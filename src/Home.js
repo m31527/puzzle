@@ -1,31 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, NativeModules,Platform, NativeEventEmitter, ImageBackground, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, NativeModules, Platform, NativeEventEmitter, ImageBackground, TextInput, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import TestDataGenerator from './TestDataGenerator';
 import { TestProvider } from './contexts/TestContext';
 
 // 使用 require 直接導入原生模組
 const NeuroSkyModule = require('react-native').NativeModules.NeuroSkyModule;
-const ESP32Module = require('react-native').NativeModules.ESP32Module;
+// const ESP32Module = require('react-native').NativeModules.ESP32Module;
 
 if (!NeuroSkyModule) {
     console.error('NeuroSkyModule is not available');
 }
 
-if (!ESP32Module) {
-    console.error('ESP32Module is not available');
-}
+// if (!ESP32Module) {
+//     console.error('ESP32Module is not available');
+// }
 
 // 創建事件發射器
 const neuroSkyEmitter = new NativeEventEmitter(NeuroSkyModule);
-const esp32Emitter = new NativeEventEmitter(ESP32Module);
+// const esp32Emitter = new NativeEventEmitter(ESP32Module);
 
 const Home = () => {
     const navigation = useNavigation();
     const [thinkGearStatus, setThinkGearStatus] = useState('未連接');
-    const [esp32Status, setEsp32Status] = useState('未連接');
+    // const [esp32Status, setEsp32Status] = useState('未連接');
     const [attention, setAttention] = useState(0);
-    const [esp32Data, setEsp32Data] = useState(null);
+    // const [esp32Data, setEsp32Data] = useState(null);
     const [userName, setUserName] = useState('受試者');
     const [isTestMode, setIsTestMode] = useState(false);
     const [testGenerator, setTestGenerator] = useState(null);
@@ -73,52 +73,52 @@ const Home = () => {
             );
         }
 
-        if (ESP32Module) {
-            // ESP32 事件監聽
-            subscriptions.push(
-                esp32Emitter.addListener('onESP32Data', (event) => {
-                    try {
-                        const rawData = event.data;
-                        const data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
-                        
-                        if (data.cast === true || data.castbig === true) {
-                            setEsp32Data(data);
-                            console.log('Home - 更新 ESP32 狀態:', data);
-                            
-                            // 轉發事件到 Evaluate
-                            DeviceEventEmitter.emit('onESP32Data', event);
-                            console.log('Home - 轉發事件到 Evaluate');
-                        }
-                    } catch (error) {
-                        console.log('Home - 解析 ESP32 數據錯誤:', error);
-                    }
-                })
-            );
+        // if (ESP32Module) {
+        //     // ESP32 事件監聽
+        //     subscriptions.push(
+        //         esp32Emitter.addListener('onESP32Data', (event) => {
+        //             try {
+        //                 const rawData = event.data;
+        //                 const data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+        //                 
+        //                 if (data.cast === true || data.castbig === true) {
+        //                     setEsp32Data(data);
+        //                     console.log('Home - 更新 ESP32 狀態:', data);
+        //                     
+        //                     // 轉發事件到 Evaluate
+        //                     DeviceEventEmitter.emit('onESP32Data', event);
+        //                     console.log('Home - 轉發事件到 Evaluate');
+        //                 }
+        //             } catch (error) {
+        //                 console.log('Home - 解析 ESP32 數據錯誤:', error);
+        //             }
+        //         })
+        //     );
 
-            subscriptions.push(
-                esp32Emitter.addListener('onESP32Connected', (event) => {
-                    console.log('ESP32 狀態變更:', event.status);
-                    switch (event.status) {
-                        case 'CONNECTED':
-                            setEsp32Status('已連接');
-                            break;
-                        case 'DISCONNECTED':
-                            setEsp32Status('未連接');
-                            break;
-                        case 'CONNECTING':
-                            setEsp32Status('連線中...');
-                            break;
-                    }
-                })
-            );
+        //     subscriptions.push(
+        //         esp32Emitter.addListener('onESP32Connected', (event) => {
+        //             console.log('ESP32 狀態變更:', event.status);
+        //             switch (event.status) {
+        //                 case 'CONNECTED':
+        //                     setEsp32Status('已連接');
+        //                     break;
+        //                 case 'DISCONNECTED':
+        //                     setEsp32Status('未連接');
+        //                     break;
+        //                 case 'CONNECTING':
+        //                     setEsp32Status('連線中...');
+        //                     break;
+        //             }
+        //         })
+        //     );
 
-            subscriptions.push(
-                esp32Emitter.addListener('onESP32Error', (event) => {
-                    console.log('ESP32 錯誤:', event.error);
-                    setEsp32Status('連接錯誤');
-                })
-            );
-        }
+        //     subscriptions.push(
+        //         esp32Emitter.addListener('onESP32Error', (event) => {
+        //             console.log('ESP32 錯誤:', event.error);
+        //             setEsp32Status('連接錯誤');
+        //         })
+        //     );
+        // }
 
         // 開始連接設備
         const connectDevices = async () => {
@@ -127,10 +127,10 @@ const Home = () => {
                     console.log('開始連接 ThinkGear...');
                     await NeuroSkyModule.connect();
                 }
-                if (ESP32Module) {
-                    console.log('開始連接 ESP32...');
-                    await ESP32Module.connect();
-                }
+                // if (ESP32Module) {
+                //     console.log('開始連接 ESP32...');
+                //     await ESP32Module.connect();
+                // }
             } catch (error) {
                 console.error('連接設備錯誤:', error);
             }
@@ -142,7 +142,7 @@ const Home = () => {
         return () => {
             subscriptions.forEach(subscription => subscription.remove());
             if (NeuroSkyModule) NeuroSkyModule.disconnect();
-            if (ESP32Module) ESP32Module.disconnect();
+            // if (ESP32Module) ESP32Module.disconnect();
         };
     }, []);
 
@@ -199,32 +199,32 @@ const Home = () => {
             }
         });
 
-        generator.setListener('onESP32Connected', (event) => {
-            console.log('ESP32 狀態變更:', event.status);
-            switch (event.status) {
-                case 'CONNECTED':
-                    setEsp32Status('已連接');
-                    break;
-                case 'DISCONNECTED':
-                    setEsp32Status('未連接');
-                    break;
-                case 'CONNECTING':
-                    setEsp32Status('連線中...');
-                    break;
-            }
-        });
+        // generator.setListener('onESP32Connected', (event) => {
+        //     console.log('ESP32 狀態變更:', event.status);
+        //     switch (event.status) {
+        //         case 'CONNECTED':
+        //             setEsp32Status('已連接');
+        //             break;
+        //         case 'DISCONNECTED':
+        //             setEsp32Status('未連接');
+        //             break;
+        //         case 'CONNECTING':
+        //             setEsp32Status('連線中...');
+        //             break;
+        //     }
+        // });
 
-        generator.setListener('onESP32Data', (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                if (data.cast === true || data.castbig === true) {
-                    setEsp32Data(data);
-                    console.log('收到 ESP32 投擲數據:', data);
-                }
-            } catch (error) {
-                console.error('解析 ESP32 數據錯誤:', error);
-            }
-        });
+        // generator.setListener('onESP32Data', (event) => {
+        //     try {
+        //         const data = JSON.parse(event.data);
+        //         if (data.cast === true || data.castbig === true) {
+        //             setEsp32Data(data);
+        //             console.log('收到 ESP32 投擲數據:', data);
+        //         }
+        //     } catch (error) {
+        //         console.error('解析 ESP32 數據錯誤:', error);
+        //     }
+        // });
     };
 
     // 點擊開始按鈕執行的函數
@@ -274,6 +274,11 @@ const Home = () => {
 
                     <View style={styles.titleContainer}>
                         <Text style={styles.title}>益智积木脑里评测</Text>
+                        <Image
+                            source={require('../assets/img/main.png')}
+                            style={styles.mainImage}
+                            resizeMode="contain"
+                        />
                     </View>
 
                     <View style={styles.statusContainer}>
@@ -287,12 +292,12 @@ const Home = () => {
                             )}
                         </View>
 
-                        <View style={styles.deviceStatus}>
+                        {/* <View style={styles.deviceStatus}>
                             <Text style={styles.deviceLabel}>投壺狀態:</Text>
                             <Text style={[styles.statusText, { color: getStatusColor(esp32Status) }]}>
                                 {esp32Status}
                             </Text>
-                        </View>
+                        </View> */}
                     </View>
 
                     <View style={styles.inputContainer}>
@@ -307,14 +312,17 @@ const Home = () => {
                     </View>
 
                     <TouchableOpacity 
-                        style={[
-                            styles.startButton,
-                            !canStart
-                        ]} 
+                        style={styles.startButton}
                         onPress={handleStart}
                         disabled={!canStart}
                     >
-                        <Text style={styles.startButtonText}>開始</Text>
+                        <ImageBackground
+                            source={require('../assets/img/btn.png')}
+                            style={styles.startButtonImage}
+                            resizeMode="stretch"
+                        >
+                            <Text style={styles.startButtonText}>開始</Text>
+                        </ImageBackground>
                     </TouchableOpacity>
                 </ImageBackground>
             </View>
@@ -341,8 +349,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     titleContainer: {
+        position: 'absolute',
+        top: 50,
+        width: '100%',
         alignItems: 'center',
-        marginTop: 10,
     },
     title: {
         fontSize: 40,
@@ -351,12 +361,19 @@ const styles = StyleSheet.create({
         textShadowColor: 'rgba(0, 0, 0, 0.5)',
         textShadowOffset: { width: 2, height: 2 },
         textShadowRadius: 5,
+        marginBottom: 20,
+    },
+    mainImage: {
+        width: 300,
+        height: 300,
     },
     statusContainer: {
+        marginTop: 250,
+        position: 'relative',
+        width: '100%',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 20,
     },
     deviceStatus: {
         marginVertical: 10,
@@ -385,7 +402,7 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 30,
+        marginTop: 30,
         width: '80%',
         alignSelf: 'center',
     },
@@ -406,14 +423,15 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
     },
     startButton: {
-        backgroundColor: '#d4a373',
-        paddingVertical: 10,
-        paddingHorizontal: 40,
-        borderRadius: 10,
+        position: 'absolute',
+        bottom: 50,
         alignSelf: 'center',
-        marginTop: 50,
-        borderWidth: 1,
-        borderColor: '#fff',
+    },
+    startButtonImage: {
+        width: 120,
+        height: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     startButtonDisabled: {
         backgroundColor: '#999',
@@ -421,8 +439,11 @@ const styles = StyleSheet.create({
     },
     startButtonText: {
         fontSize: 20,
-        color: '#fff',
+        color: '#1D417D',
         fontWeight: 'bold',
+        // textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        // textShadowOffset: { width: 2, height: 2 },
+        // textShadowRadius: 3,
     },
     testModeButton: {
         backgroundColor: '#4CAF50',
