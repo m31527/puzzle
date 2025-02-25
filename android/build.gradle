@@ -1,0 +1,73 @@
+buildscript {
+    ext {
+        buildToolsVersion = "34.0.0"
+        minSdkVersion = 29
+        compileSdkVersion = 34
+        targetSdkVersion = 29
+        ndkVersion = "26.1.10909125"
+        kotlinVersion = "1.8.0"
+        FLIPPER_VERSION = "0.182.0"
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        
+        // Define versions in a single place
+        agpVersion = '8.1.2'
+        reactNativeGradlePluginVersion = '0.76.5'
+
+        // Enable Hermes
+        enableHermes = false
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:${agpVersion}")
+        classpath("com.facebook.react:react-native-gradle-plugin:${reactNativeGradlePluginVersion}")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+    }
+}
+
+apply plugin: "com.facebook.react.rootproject"
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven {
+            // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
+            url("$rootDir/../node_modules/react-native/android")
+        }
+        maven {
+            // Android JSC is installed from npm
+            url("$rootDir/../node_modules/jsc-android/dist")
+        }
+        maven {
+            // react-native-screens
+            url("$rootDir/../node_modules/react-native-screens/node_modules/react-native/android")
+        }
+        maven { url 'https://www.jitpack.io' }
+    }
+    
+    plugins.withType(JavaPlugin) {
+        java {
+            sourceCompatibility = JavaVersion.VERSION_17
+            targetCompatibility = JavaVersion.VERSION_17
+        }
+    }
+    
+    plugins.withType(com.android.build.gradle.BasePlugin) {
+        android {
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
+        }
+    }
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+        freeCompilerArgs += "-Xjvm-target-validation=disable"
+    }
+}
