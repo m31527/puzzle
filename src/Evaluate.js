@@ -1073,7 +1073,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   footerButtonText: {
-    color: '#FFFFFF',
+    color: '#1D417D',
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',

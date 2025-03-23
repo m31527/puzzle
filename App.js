@@ -5,6 +5,7 @@ import Home from './src/Home';
 import Evaluate from './src/Evaluate';
 import Report from './src/Report';
 import History from './src/History';
+import PuzzleTest from './src/PuzzleTest';
 
 const Stack = createNativeStackNavigator();
 
@@ -30,6 +31,11 @@ const App = () => {
         <Stack.Screen 
           name="History" 
           component={History}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="PuzzleTest" 
+          component={PuzzleTest}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

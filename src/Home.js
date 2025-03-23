@@ -311,19 +311,34 @@ const Home = () => {
                         />
                     </View>
 
-                    <TouchableOpacity 
-                        style={styles.startButton}
-                        onPress={handleStart}
-                        disabled={!canStart}
-                    >
-                        <ImageBackground
-                            source={require('../assets/img/btn.png')}
-                            style={styles.startButtonImage}
-                            resizeMode="stretch"
+                    <View style={styles.buttonContainer}>
+                        <TouchableOpacity 
+                            style={styles.startButton}
+                            onPress={handleStart}
+                            disabled={!canStart}
                         >
-                            <Text style={styles.startButtonText}>開始</Text>
-                        </ImageBackground>
-                    </TouchableOpacity>
+                            <ImageBackground
+                                source={require('../assets/img/btn.png')}
+                                style={styles.startButtonImage}
+                                resizeMode="stretch"
+                            >
+                                <Text style={styles.startButtonText}>開始</Text>
+                            </ImageBackground>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            style={styles.puzzleButton}
+                            onPress={() => navigation.navigate('PuzzleTest')}
+                        >
+                            <ImageBackground
+                                source={require('../assets/img/btn.png')}
+                                style={styles.startButtonImage}
+                                resizeMode="stretch"
+                            >
+                                <Text style={styles.startButtonText}>拼圖遊戲</Text>
+                            </ImageBackground>
+                        </TouchableOpacity>
+                    </View>
                 </ImageBackground>
             </View>
         </TestProvider>
@@ -333,6 +348,10 @@ const Home = () => {
 export default Home;
 
 const styles = StyleSheet.create({
+    buttonContainer: {
+        alignItems: 'center',
+        gap: 20,
+    },
     container: {
         flex: 1,
     },
@@ -423,9 +442,13 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
     },
     startButton: {
+        width: '80%',
         position: 'absolute',
         bottom: 50,
         alignSelf: 'center',
+    },
+    puzzleButton: {
+        width: '80%',
     },
     startButtonImage: {
         width: 120,
