@@ -31,23 +31,53 @@ const puzzleImages = {
 
 const PUZZLE_SIZE = 4; // 4x4 拼圖
 const TOTAL_PIECES = PUZZLE_SIZE * PUZZLE_SIZE;
-const PIECE_SIZE = 80; // 拼圖片的大小
-const GRID_OFFSET_X = 50; // 拼圖網格的X軸偏移
-const GRID_OFFSET_Y = 150; // 拼圖網格的Y軸偏移
+const GRID_SIZE = 360; // 背景圖的大小
+const PIECE_SIZE = GRID_SIZE / PUZZLE_SIZE; // 根據背景圖大小計算拼圖片大小
+
+// 計算中心對齊的偏移量
+const screenWidth = Dimensions.get('window').width;
+const screenHeight = Dimensions.get('window').height;
+const GRID_OFFSET_X = (screenWidth - GRID_SIZE) / 4; // 水平對齊
+const GRID_OFFSET_Y = 50; // 垂直位置
 
 const PuzzleTest = () => {
   const [pieces, setPieces] = useState([]);
   const [completed, setCompleted] = useState(new Array(TOTAL_PIECES).fill(false));
   const [completedCount, setCompletedCount] = useState(0);
 
+  const handleAutoComplete = () => {
+    const newPieces = [...pieces];
+    newPieces.forEach(piece => {
+      const correctPos = correctPositions[piece.id];
+      piece.position.setValue({ x: correctPos.x, y: correctPos.y });
+      piece.pan.setValue({ x: 0, y: 0 });
+    });
+    setPieces(newPieces);
+    setCompleted(new Array(TOTAL_PIECES).fill(true));
+    setCompletedCount(TOTAL_PIECES);
+  };
+
+  const correctPositions = {
+    1:  { x:  45,  y:  80 },  // 橘色十字
+    2:  { x: 115,  y:  80 },  // 藍色圓形
+    3:  { x: 185,  y:  80 },  // 紫色三角
+    4:  { x: 245,  y:  80 },  // 綠色半圓
+    5:  { x:  45,  y: 155 },  // 粉紅色星星
+    6:  { x: 115,  y: 155 },  // 橘色橢圓
+    7:  { x: 180,  y: 155 },  // 黃色五邊形
+    8:  { x: 245,  y: 155 },  // 淺藍色方形
+    9:  { x:  45,  y: 215 },  // 綠色梯形
+    10: { x: 110,  y: 220 },  // 紅色六角
+    11: { x: 175,  y: 215 },  // 藍色梅花
+    12: { x: 245,  y: 215 },  // 綠色愛心
+    13: { x:  45,  y: 285 },  // 黃色箭頭屋
+    14: { x: 105,  y: 285 },  // 紫色X星
+    15: { x: 175,  y: 285 },  // 粉色方塊
+    16: { x: 245,  y: 285 },  // 紅色平行四邊形
+  };
   // 計算拼圖的正確位置
   const getCorrectPosition = (index) => {
-    const row = Math.floor(index / PUZZLE_SIZE);
-    const col = index % PUZZLE_SIZE;
-    return {
-      x: GRID_OFFSET_X + col * PIECE_SIZE,
-      y: GRID_OFFSET_Y + row * PIECE_SIZE,
-    };
+    return correctPositions[index];
   };
 
   // 初始化拼圖位置
@@ -60,31 +90,40 @@ const PuzzleTest = () => {
       correctPosition: getCorrectPosition(index),
     }));
 
-    // 隨機分配初始位置（在邊緣）
+    // 隨機分配初始位置
     const screenWidth = Dimensions.get('window').width;
     const screenHeight = Dimensions.get('window').height;
+    const padding = PIECE_SIZE;
     
     initialPieces.forEach(piece => {
-      const side = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
-      let x, y;
+      // 將拼圖均勻分布在四周
+      const totalSpots = TOTAL_PIECES;
+      const spotsPerSide = Math.ceil(totalSpots / 4);
+      const pieceIndex = piece.id - 1;
+      const sideIndex = Math.floor(pieceIndex / spotsPerSide);
+      const positionInSide = pieceIndex % spotsPerSide;
       
-      switch(side) {
+      let x, y;
+      switch(sideIndex) {
         case 0: // top
-          x = Math.random() * screenWidth;
-          y = 50;
+          x = GRID_OFFSET_X + (GRID_SIZE / spotsPerSide) * positionInSide;
+          y = padding;
           break;
         case 1: // right
-          x = screenWidth - 100;
-          y = Math.random() * (screenHeight - 200) + 100;
+          x = screenWidth - padding * 2;
+          y = GRID_OFFSET_Y + (GRID_SIZE / spotsPerSide) * positionInSide;
           break;
         case 2: // bottom
-          x = Math.random() * screenWidth;
-          y = screenHeight - 150;
+          x = GRID_OFFSET_X + (GRID_SIZE / spotsPerSide) * positionInSide;
+          y = screenHeight - padding * 3;
           break;
         case 3: // left
-          x = 50;
-          y = Math.random() * (screenHeight - 200) + 100;
+          x = padding;
+          y = GRID_OFFSET_Y + (GRID_SIZE / spotsPerSide) * positionInSide;
           break;
+        default: // 額外的拼圖放在頂部
+          x = GRID_OFFSET_X + (GRID_SIZE / spotsPerSide) * positionInSide;
+          y = padding;
       }
       
       piece.position.setValue({ x, y });
@@ -111,34 +150,39 @@ const PuzzleTest = () => {
       onPanResponderRelease: (e, gesture) => {
         pieces[index].pan.flattenOffset();
         
-        // 檢查是否放在正確位置
-        const correctPos = pieces[index].correctPosition;
-        const dropX = pieces[index].position.x._value + pieces[index].pan.x._value;
-        const dropY = pieces[index].position.y._value + pieces[index].pan.y._value;
+        const currentX = pieces[index].position.x._value + pieces[index].pan.x._value;
+        const currentY = pieces[index].position.y._value + pieces[index].pan.y._value;
+        const correctPos = getCorrectPosition(pieces[index].id);
         
-        const tolerance = 30; // 允許的誤差範圍
+        const tolerance = 45; // 調整容許誤差
         
-        console.log(`Piece ${index + 1} position:`, { dropX, dropY });
-        console.log(`Correct position:`, correctPos);
+        console.log(`Piece ${pieces[index].id} position:`, { 
+          current: { x: currentX, y: currentY },
+          correct: correctPos,
+          diff: {
+            x: Math.abs(currentX - correctPos.x),
+            y: Math.abs(currentY - correctPos.y)
+          }
+        });
         
         if (
-          Math.abs(dropX - correctPos.x) < tolerance &&
-          Math.abs(dropY - correctPos.y) < tolerance
+          Math.abs(currentX - correctPos.x) < tolerance &&
+          Math.abs(currentY - correctPos.y) < tolerance
         ) {
-          // 拼圖放置正確
-          Animated.spring(pieces[index].pan, {
-            toValue: { 
-              x: correctPos.x - pieces[index].position.x._value,
-              y: correctPos.y - pieces[index].position.y._value
-            },
-            useNativeDriver: false,
-          }).start();
+          // 直接設置到正確位置
+          pieces[index].position.setValue({
+            x: correctPos.x,
+            y: correctPos.y
+          });
           
-          const newCompleted = [...completed];
-          if (!newCompleted[index]) { // 只有在之前未完成時才增加計數
+          pieces[index].pan.setValue({ x: 0, y: 0 });
+          
+          if (!completed[index]) {
+            const newCompleted = [...completed];
             newCompleted[index] = true;
             setCompleted(newCompleted);
             setCompletedCount(prev => prev + 1);
+            console.log(`Piece ${pieces[index].id} completed! Total: ${completedCount + 1}`);
           }
         }
       },
@@ -150,13 +194,15 @@ const PuzzleTest = () => {
       {/* 進度提示 */}
       <View style={styles.progressContainer}>
         <Text style={styles.progressText}>{completedCount}/{TOTAL_PIECES}</Text>
+        <Text onPress={handleAutoComplete} style={styles.autoCompleteButton}>
+          拼上
+        </Text>
       </View>
 
       {/* 背景圖 */}
       <Image
         source={require('../assets/img/puzzle/puzzle_map.png')}
         style={styles.backgroundImage}
-        resizeMode="contain"
       />
       
       {/* 拼圖片 */}
@@ -175,7 +221,7 @@ const PuzzleTest = () => {
         >
           <Image
             source={puzzleImages[piece.id]}
-            style={styles.pieceImage}
+            style={[styles.pieceImage, piece.id === 10 && { width: PIECE_SIZE, height: PIECE_SIZE }]}
             resizeMode="contain"
           />
         </Animated.View>
@@ -199,24 +245,40 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  autoCompleteButton: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+    overflow: 'hidden',
+  },
   container: {
     flex: 1,
     backgroundColor: '#FFF5F5',
   },
   backgroundImage: {
-    width: '100%',
-    height: '100%',
+    width: GRID_SIZE,
+    height: GRID_SIZE,
     position: 'absolute',
+    left: GRID_OFFSET_X,
+    top: GRID_OFFSET_Y,
+    resizeMode: 'stretch',
   },
   piece: {
     position: 'absolute',
-    width: 80,
-    height: 80,
+    width: PIECE_SIZE,
+    height: PIECE_SIZE,
     zIndex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   pieceImage: {
-    width: '100%',
-    height: '100%',
+    width: PIECE_SIZE * 0.85,
+    height: PIECE_SIZE * 0.85,
+    resizeMode: 'contain',
   },
 });
 
