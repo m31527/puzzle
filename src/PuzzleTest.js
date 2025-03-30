@@ -235,7 +235,7 @@ const PuzzleTest = () => {
               top: piece.position.y,
             },
           ]}
-          {...(completed[index] ? {} : createPanResponder(index).panHandlers)}
+          {...createPanResponder(index).panHandlers}
         >
           <Image
             source={puzzleImages[piece.id]}
