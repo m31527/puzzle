@@ -188,11 +188,11 @@ function gameDataReducer(state, action) {
       }
 
       const newThetaValues = [...(state.thetaValues || []), validValue];
-      console.log('Theta 值更新:', {
-        新值: validValue,
-        目前數據量: newThetaValues.length,
-        所有值: newThetaValues
-      });
+      // console.log('Theta 值更新:', {
+      //   新值: validValue,
+      //   目前數據量: newThetaValues.length,
+      //   所有值: newThetaValues
+      // });
 
       return {
         ...state,
@@ -830,6 +830,14 @@ const Evaluate = forwardRef((props, ref) => {
   const TOTAL_PIECES = 16;
   const [pieces, setPieces] = useState([]);
   const [completed, setCompleted] = useState(new Array(TOTAL_PIECES).fill(false));
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+
+  // 監控拼圖完成狀態
+  useEffect(() => {
+    if (completed.every(isComplete => isComplete)) {
+      setShowCompletionModal(true);
+    }
+  }, [completed]);
 
   // 初始化拼圖
   useEffect(() => {
@@ -845,10 +853,12 @@ const Evaluate = forwardRef((props, ref) => {
     const screenWidth = Dimensions.get('window').width;
     const screenHeight = Dimensions.get('window').height;
     const safeMargin = PIECE_SIZE;
+    
+    // 修改可視範圍，確保拼圖不會超出畫面
     const safeLeft = safeMargin;
     const safeRight = screenWidth - PIECE_SIZE - safeMargin;
-    const safeTop = safeMargin;
-    const safeBottom = screenHeight - PIECE_SIZE - safeMargin;
+    const safeTop = 10; // 增加上方空間
+    const safeBottom = screenHeight * 0.6; // 限制在螢幕60%的高度內
 
     // 計算拼圖底圖的邊界
     const GRID_SIZE = 300;
@@ -1003,6 +1013,26 @@ const Evaluate = forwardRef((props, ref) => {
         </View>
       </View>
 
+      {/* Completion Modal */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={showCompletionModal}>
+        <View style={styles.modalBackground}>
+          <View style={[styles.loadingContainer, styles.completionContainer]}>
+            <Text style={styles.completionText}>恭喜完成拼圖！</Text>
+            <TouchableOpacity
+              style={styles.reportButton}
+              onPress={() => {
+                setShowCompletionModal(false);
+                navigation.navigate('Report');
+              }}>
+              <Text style={styles.reportButtonText}>查看報告</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Loading Modal */}
       <Modal
         transparent={true}
@@ -1020,6 +1050,29 @@ const Evaluate = forwardRef((props, ref) => {
 });
 
 const styles = StyleSheet.create({
+  completionContainer: {
+    padding: 20,
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 10,
+  },
+  completionText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
+  },
+  reportButton: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 30,
+    paddingVertical: 10,
+    borderRadius: 5,
+  },
+  reportButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
   container: {
     flex: 1,
   },

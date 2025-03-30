@@ -3,11 +3,13 @@ import {
   View,
   Image,
   StyleSheet,
+  Alert,
   PanResponder,
   Animated,
   Dimensions,
   Text,
 } from 'react-native';
+import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 
 // 預先導入所有拼圖圖片
 const puzzleImages = {
@@ -41,9 +43,70 @@ const GRID_OFFSET_X = (screenWidth - GRID_SIZE) / 4; // 水平對齊
 const GRID_OFFSET_Y = 50; // 垂直位置
 
 const PuzzleTest = () => {
+  const navigation = useNavigation();
   const [pieces, setPieces] = useState([]);
   const [completed, setCompleted] = useState(new Array(TOTAL_PIECES).fill(false));
   const [completedCount, setCompletedCount] = useState(0);
+
+  // 重置遊戲狀態
+  const resetGame = () => {
+    // 重置完成狀態
+    setCompleted(new Array(TOTAL_PIECES).fill(false));
+    setCompletedCount(0);
+
+    // 重新初始化拼圖
+    const initialPieces = Array.from({ length: TOTAL_PIECES }, (_, index) => ({
+      id: index + 1,
+      position: new Animated.ValueXY(),
+      isPlaced: false,
+      pan: new Animated.ValueXY(),
+    }));
+
+    // 計算固定位置
+    const positions = [];
+    const piecesPerSide = Math.ceil(TOTAL_PIECES / 4);
+
+    for (let i = 0; i < TOTAL_PIECES; i++) {
+      const sideIndex = Math.floor(i / piecesPerSide);
+      const positionInSide = i % piecesPerSide;
+      const margin = PIECE_SIZE * 0.5;
+      
+      let x, y;
+      
+      switch(sideIndex) {
+        case 0: // 上方
+          x = puzzleLeft + (positionInSide * GRID_SIZE / piecesPerSide) + margin;
+          y = puzzleTop + margin;
+          break;
+        case 1: // 右方
+          x = puzzleRight - margin;
+          y = puzzleTop + (positionInSide * GRID_SIZE / piecesPerSide) + margin;
+          break;
+        case 2: // 下方
+          x = puzzleRight - (positionInSide * GRID_SIZE / piecesPerSide) - margin;
+          y = puzzleBottom - margin;
+          break;
+        case 3: // 左方
+          x = puzzleLeft + margin;
+          y = puzzleBottom - (positionInSide * GRID_SIZE / piecesPerSide) - margin;
+          break;
+      }
+      positions.push({ x, y });
+    }
+
+    // 創建隨機的拼圖編號陣列
+    const pieceIds = Array.from({ length: TOTAL_PIECES }, (_, i) => i + 1);
+    const shuffledPieceIds = pieceIds.sort(() => Math.random() - 0.5);
+
+    // 將隨機的拼圖編號分配到固定位置
+    initialPieces.forEach((piece, index) => {
+      const position = positions[index];
+      piece.id = shuffledPieceIds[index];
+      piece.position.setValue(position);
+    });
+
+    setPieces(initialPieces);
+  };
 
   const handleAutoComplete = () => {
     const newPieces = [...pieces];
@@ -108,43 +171,47 @@ const PuzzleTest = () => {
     const puzzleTop = GRID_OFFSET_Y;
     const puzzleBottom = GRID_OFFSET_Y + GRID_SIZE;
 
-    // 將拼圖均勻分布在四周
-    initialPieces.forEach((piece, index) => {
-      const totalPieces = TOTAL_PIECES;
-      const piecesPerSide = Math.ceil(totalPieces / 4);
-      const sideIndex = Math.floor(index / piecesPerSide);
+    // 先計算所有固定位置
+    const positions = [];
+    const piecesPerSide = Math.ceil(TOTAL_PIECES / 4);
+
+    for (let i = 0; i < TOTAL_PIECES; i++) {
+      const sideIndex = Math.floor(i / piecesPerSide);
+      const positionInSide = i % piecesPerSide;
+      const margin = PIECE_SIZE * 0.5;
       
       let x, y;
-      const spreadRange = PIECE_SIZE * 0.8; // 散布範圍
       
       switch(sideIndex) {
         case 0: // 上方
-          x = puzzleLeft + (Math.random() * GRID_SIZE);
-          y = Math.max(safeTop, puzzleTop - PIECE_SIZE - spreadRange);
+          x = puzzleLeft + (positionInSide * GRID_SIZE / piecesPerSide) + margin;
+          y = puzzleTop + margin;
           break;
         case 1: // 右方
-          x = Math.min(safeRight, puzzleRight + spreadRange);
-          y = puzzleTop + (Math.random() * GRID_SIZE);
+          x = puzzleRight - margin;
+          y = puzzleTop + (positionInSide * GRID_SIZE / piecesPerSide) + margin;
           break;
         case 2: // 下方
-          x = puzzleLeft + (Math.random() * GRID_SIZE);
-          y = Math.min(safeBottom, puzzleBottom + spreadRange);
+          x = puzzleRight - (positionInSide * GRID_SIZE / piecesPerSide) - margin;
+          y = puzzleBottom - margin;
           break;
         case 3: // 左方
-          x = Math.max(safeLeft, puzzleLeft - PIECE_SIZE - spreadRange);
-          y = puzzleTop + (Math.random() * GRID_SIZE);
+          x = puzzleLeft + margin;
+          y = puzzleBottom - (positionInSide * GRID_SIZE / piecesPerSide) - margin;
           break;
       }
-      
-      // 確保拼圖在安全範圍內
-      x = Math.max(safeLeft, Math.min(safeRight, x));
-      y = Math.max(safeTop, Math.min(safeBottom, y));
-      
-      // 加入小幅度的隨機偏移
-      x += (Math.random() - 0.5) * PIECE_SIZE * 0.3;
-      y += (Math.random() - 0.5) * PIECE_SIZE * 0.3;
-      
-      piece.position.setValue({ x, y });
+      positions.push({ x, y });
+    }
+
+    // 創建隨機的拼圖編號陣列
+    const pieceIds = Array.from({ length: TOTAL_PIECES }, (_, i) => i + 1);
+    const shuffledPieceIds = pieceIds.sort(() => Math.random() - 0.5);
+
+    // 將隨機的拼圖編號分配到固定位置
+    initialPieces.forEach((piece, index) => {
+      const position = positions[index];
+      piece.id = shuffledPieceIds[index];
+      piece.position.setValue(position);
     });
 
     setPieces(initialPieces);
@@ -199,8 +266,29 @@ const PuzzleTest = () => {
             const newCompleted = [...completed];
             newCompleted[index] = true;
             setCompleted(newCompleted);
-            setCompletedCount(prev => prev + 1);
-            console.log(`Piece ${pieces[index].id} completed! Total: ${completedCount + 1}`);
+            const newCount = completedCount + 1;
+            setCompletedCount(newCount);
+            console.log(`Piece ${pieces[index].id} completed! Total: ${newCount}`);
+
+            // 檢查是否全部完成
+            if (newCount === TOTAL_PIECES) {
+              Alert.alert(
+                '恭喜完成！',
+                '你已經完成了所有拼圖！',
+                [
+                  
+                  {
+                    text: '重新一次',
+                    onPress: resetGame,
+                    style: 'cancel'
+                  },
+                  {
+                    text: '查看報告',
+                    onPress: () => navigation.navigate('Report')
+                  }
+                ]
+              );
+            }
           }
         }
       },
@@ -212,9 +300,9 @@ const PuzzleTest = () => {
       {/* 進度提示 */}
       <View style={styles.progressContainer}>
         <Text style={styles.progressText}>{completedCount}/{TOTAL_PIECES}</Text>
-        {/* <Text onPress={handleAutoComplete} style={styles.autoCompleteButton}>
+        <Text onPress={handleAutoComplete} style={styles.autoCompleteButton}>
           拼上
-        </Text> */}
+        </Text>
       </View>
 
       {/* 背景圖 */}
