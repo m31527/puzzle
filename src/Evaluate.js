@@ -12,6 +12,7 @@ import {
   Modal,
   NativeEventEmitter,
   NativeModules,
+  Animated,
 } from 'react-native';
 
 import { LineChart } from 'react-native-chart-kit';
@@ -19,6 +20,7 @@ import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native'
 import Database from './utils/database';
 import { useTest } from './contexts/TestContext';
 import { GAME_CONFIG } from './config/gameConfig';
+import PuzzleTest from './PuzzleTest';
 import TestDataGenerator from './TestDataGenerator';
 
 // 初始狀態
@@ -824,6 +826,116 @@ const Evaluate = forwardRef((props, ref) => {
     resetData
   }));
 
+  // 拼圖遊戲相關狀態
+  const TOTAL_PIECES = 16;
+  const [pieces, setPieces] = useState([]);
+  const [completed, setCompleted] = useState(new Array(TOTAL_PIECES).fill(false));
+
+  // 初始化拼圖
+  useEffect(() => {
+    const initialPieces = Array.from({ length: TOTAL_PIECES }, (_, index) => ({
+      id: index + 1,
+      position: new Animated.ValueXY(),
+      isPlaced: false,
+      pan: new Animated.ValueXY(),
+    }));
+
+    // 計算安全的可視範圍（考慮拼圖大小）
+    const PIECE_SIZE = 50;
+    const screenWidth = Dimensions.get('window').width;
+    const screenHeight = Dimensions.get('window').height;
+    const safeMargin = PIECE_SIZE;
+    const safeLeft = safeMargin;
+    const safeRight = screenWidth - PIECE_SIZE - safeMargin;
+    const safeTop = safeMargin;
+    const safeBottom = screenHeight - PIECE_SIZE - safeMargin;
+
+    // 計算拼圖底圖的邊界
+    const GRID_SIZE = 300;
+    const GRID_OFFSET_X = (screenWidth - GRID_SIZE) / 2;
+    const GRID_OFFSET_Y = 50;
+    const puzzleLeft = GRID_OFFSET_X;
+    const puzzleRight = GRID_OFFSET_X + GRID_SIZE;
+    const puzzleTop = GRID_OFFSET_Y;
+    const puzzleBottom = GRID_OFFSET_Y + GRID_SIZE;
+
+    // 將拼圖均勻分布在四周
+    initialPieces.forEach((piece, index) => {
+      const piecesPerSide = Math.ceil(TOTAL_PIECES / 4);
+      const sideIndex = Math.floor(index / piecesPerSide);
+      
+      let x, y;
+      const spreadRange = PIECE_SIZE * 0.8; // 散布範圍
+      
+      switch(sideIndex) {
+        case 0: // 上方
+          x = puzzleLeft + (Math.random() * GRID_SIZE);
+          y = Math.max(safeTop, puzzleTop - PIECE_SIZE - spreadRange);
+          break;
+        case 1: // 右方
+          x = Math.min(safeRight, puzzleRight + spreadRange);
+          y = puzzleTop + (Math.random() * GRID_SIZE);
+          break;
+        case 2: // 下方
+          x = puzzleLeft + (Math.random() * GRID_SIZE);
+          y = Math.min(safeBottom, puzzleBottom + spreadRange);
+          break;
+        case 3: // 左方
+          x = Math.max(safeLeft, puzzleLeft - PIECE_SIZE - spreadRange);
+          y = puzzleTop + (Math.random() * GRID_SIZE);
+          break;
+      }
+      
+      // 確保拼圖在安全範圍內
+      x = Math.max(safeLeft, Math.min(safeRight, x));
+      y = Math.max(safeTop, Math.min(safeBottom, y));
+      
+      // 加入小幅度的隨機偏移
+      x += (Math.random() - 0.5) * PIECE_SIZE * 0.3;
+      y += (Math.random() - 0.5) * PIECE_SIZE * 0.3;
+      
+      piece.position.setValue({ x, y });
+    });
+
+    setPieces(initialPieces);
+  }, []);
+
+  // 拼圖遊戲相關函數
+  const handleAutoComplete = () => {
+    const correctPositions = {
+      1:  { x:  45,  y:  80 },  // 橘色十字
+      2:  { x: 115,  y:  80 },  // 藍色圓形
+      3:  { x: 185,  y:  80 },  // 紫色三角
+      4:  { x: 245,  y:  80 },  // 綠色半圓
+      5:  { x:  45,  y: 155 },  // 粉紅色星星
+      6:  { x: 115,  y: 155 },  // 橘色橢圓
+      7:  { x: 180,  y: 155 },  // 黃色五邊形
+      8:  { x: 245,  y: 155 },  // 淺藍色方形
+      9:  { x:  45,  y: 215 },  // 綠色梯形
+      10: { x: 110,  y: 220 },  // 紅色六角
+      11: { x: 175,  y: 215 },  // 藍色梅花
+      12: { x: 245,  y: 215 },  // 綠色愛心
+      13: { x:  45,  y: 285 },  // 黃色箭頭屋
+      14: { x: 105,  y: 285 },  // 紫色X星
+      15: { x: 175,  y: 285 },  // 粉色方塊
+      16: { x: 245,  y: 285 },  // 紅色平行四邊形
+    };
+    
+    const newPieces = [...pieces];
+    newPieces.forEach(piece => {
+      const correctPos = correctPositions[piece.id];
+      piece.position.setValue({ x: correctPos.x, y: correctPos.y });
+      piece.pan.setValue({ x: 0, y: 0 });
+    });
+    setPieces(newPieces);
+    setCompleted(new Array(TOTAL_PIECES).fill(true));
+  };
+
+  const handlePiecePress = (index) => {
+    // 如果需要處理拼圖點擊事件
+    console.log('Piece pressed:', index);
+  };
+
   // 初始化 TestDataGenerator
   useEffect(() => {
     if (isTestMode && testGenerator) {
@@ -855,41 +967,15 @@ const Evaluate = forwardRef((props, ref) => {
       <View style={styles.container}>
         {renderChart()}
         {/* End game button */}
-        <View style={styles.buttonContainer}>
-        {isTestMode && testGenerator && (
-            <View style={styles.testButtonsContainer}>
-              <TouchableOpacity
-                style={[styles.testButton, styles.hitButton]}
-                onPress={() => testGenerator.simulateHit()}>
-                <Text style={styles.testButtonText}>模擬投中</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.testButton, styles.missButton]}
-                onPress={() => testGenerator.simulateMiss()}>
-                <Text style={styles.testButtonText}>模擬未中</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          <TouchableOpacity
-            style={styles.endButton}
-            onPress={handleEndGameButtonPress}>
-            <Text style={styles.endButtonText}>結束遊戲</Text>
-          </TouchableOpacity>
+        <View style={styles.pizzleGameZone}>
+          <PuzzleTest
+            completed={completed}
+            handleAutoComplete={handleAutoComplete}
+            handlePiecePress={handlePiecePress}
+            pieces={pieces}
+            navigation={navigation}
+          />
         </View>
-
-        {/* Player info */}
-        <View style={styles.playerInfo}>
-          <Text style={styles.playerInfoText}>
-            姓名：受試者{'\n'}
-            投擲次數：{GAME_CONFIG.MAX_THROWS}  |  命中：{gameState.successCount}
-          </Text>
-        </View>
-
-        {/* Brainwave data */}
-        <View style={styles.brainwaveContainer}>
-          <ThrowResults gameState={gameState} />
-        </View>
-
         {/* Bottom navigation */}
         <View style={styles.footer}>
           <TouchableOpacity 
@@ -1059,7 +1145,7 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: 10,
+    paddingVertical: 0,
     paddingHorizontal: 20,
     width: '100%',
   },
