@@ -212,9 +212,9 @@ const PuzzleTest = () => {
       {/* 進度提示 */}
       <View style={styles.progressContainer}>
         <Text style={styles.progressText}>{completedCount}/{TOTAL_PIECES}</Text>
-        <Text onPress={handleAutoComplete} style={styles.autoCompleteButton}>
+        {/* <Text onPress={handleAutoComplete} style={styles.autoCompleteButton}>
           拼上
-        </Text>
+        </Text> */}
       </View>
 
       {/* 背景圖 */}
