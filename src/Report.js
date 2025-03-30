@@ -254,7 +254,7 @@ const Report = () => {
       style={styles.background}
     >
       <View style={styles.titleContainer}>
-        <Text style={styles.titleText}>意念投壺</Text>
+        <Text style={styles.titleText}>拼圖遊戲</Text>
       </View>
       
       <View style={styles.contentContainer}>

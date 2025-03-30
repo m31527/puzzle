@@ -86,7 +86,7 @@ const History = () => {
           <TouchableOpacity onPress={goBack} style={styles.backButton}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>意念投壺</Text>
+          <Text style={styles.title}>拼圖遊戲</Text>
         </View>
 
         <Text style={styles.subtitle}>歷史記錄</Text>
