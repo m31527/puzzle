@@ -95,36 +95,54 @@ const PuzzleTest = () => {
     const screenHeight = Dimensions.get('window').height;
     const padding = PIECE_SIZE;
     
-    initialPieces.forEach(piece => {
-      // 將拼圖均勻分布在四周
-      const totalSpots = TOTAL_PIECES;
-      const spotsPerSide = Math.ceil(totalSpots / 4);
-      const pieceIndex = piece.id - 1;
-      const sideIndex = Math.floor(pieceIndex / spotsPerSide);
-      const positionInSide = pieceIndex % spotsPerSide;
+    // 計算安全的可視範圍（考慮拼圖大小）
+    const safeMargin = PIECE_SIZE;
+    const safeLeft = safeMargin;
+    const safeRight = screenWidth - PIECE_SIZE - safeMargin;
+    const safeTop = safeMargin;
+    const safeBottom = screenHeight - PIECE_SIZE - safeMargin;
+
+    // 計算拼圖底圖的邊界
+    const puzzleLeft = GRID_OFFSET_X;
+    const puzzleRight = GRID_OFFSET_X + GRID_SIZE;
+    const puzzleTop = GRID_OFFSET_Y;
+    const puzzleBottom = GRID_OFFSET_Y + GRID_SIZE;
+
+    // 將拼圖均勻分布在四周
+    initialPieces.forEach((piece, index) => {
+      const totalPieces = TOTAL_PIECES;
+      const piecesPerSide = Math.ceil(totalPieces / 4);
+      const sideIndex = Math.floor(index / piecesPerSide);
       
       let x, y;
+      const spreadRange = PIECE_SIZE * 0.8; // 散布範圍
+      
       switch(sideIndex) {
-        case 0: // top
-          x = GRID_OFFSET_X + (GRID_SIZE / spotsPerSide) * positionInSide;
-          y = padding;
+        case 0: // 上方
+          x = puzzleLeft + (Math.random() * GRID_SIZE);
+          y = Math.max(safeTop, puzzleTop - PIECE_SIZE - spreadRange);
           break;
-        case 1: // right
-          x = screenWidth - padding * 2;
-          y = GRID_OFFSET_Y + (GRID_SIZE / spotsPerSide) * positionInSide;
+        case 1: // 右方
+          x = Math.min(safeRight, puzzleRight + spreadRange);
+          y = puzzleTop + (Math.random() * GRID_SIZE);
           break;
-        case 2: // bottom
-          x = GRID_OFFSET_X + (GRID_SIZE / spotsPerSide) * positionInSide;
-          y = screenHeight - padding * 3;
+        case 2: // 下方
+          x = puzzleLeft + (Math.random() * GRID_SIZE);
+          y = Math.min(safeBottom, puzzleBottom + spreadRange);
           break;
-        case 3: // left
-          x = padding;
-          y = GRID_OFFSET_Y + (GRID_SIZE / spotsPerSide) * positionInSide;
+        case 3: // 左方
+          x = Math.max(safeLeft, puzzleLeft - PIECE_SIZE - spreadRange);
+          y = puzzleTop + (Math.random() * GRID_SIZE);
           break;
-        default: // 額外的拼圖放在頂部
-          x = GRID_OFFSET_X + (GRID_SIZE / spotsPerSide) * positionInSide;
-          y = padding;
       }
+      
+      // 確保拼圖在安全範圍內
+      x = Math.max(safeLeft, Math.min(safeRight, x));
+      y = Math.max(safeTop, Math.min(safeBottom, y));
+      
+      // 加入小幅度的隨機偏移
+      x += (Math.random() - 0.5) * PIECE_SIZE * 0.3;
+      y += (Math.random() - 0.5) * PIECE_SIZE * 0.3;
       
       piece.position.setValue({ x, y });
     });
