@@ -325,19 +325,6 @@ const Home = () => {
                                 <Text style={styles.startButtonText}>開始</Text>
                             </ImageBackground>
                         </TouchableOpacity>
-
-                        <TouchableOpacity 
-                            style={styles.puzzleButton}
-                            onPress={() => navigation.navigate('PuzzleTest')}
-                        >
-                            <ImageBackground
-                                source={require('../assets/img/btn.png')}
-                                style={styles.startButtonImage}
-                                resizeMode="stretch"
-                            >
-                                <Text style={styles.startButtonText}>拼圖遊戲</Text>
-                            </ImageBackground>
-                        </TouchableOpacity>
                     </View>
                 </ImageBackground>
             </View>
@@ -349,8 +336,13 @@ export default Home;
 
 const styles = StyleSheet.create({
     buttonContainer: {
+        position: 'absolute',
+        bottom: 50,
+        left: 0,
+        right: 0,
         alignItems: 'center',
-        gap: 20,
+        justifyContent: 'center',
+        flexDirection: 'row',
     },
     container: {
         flex: 1,
@@ -442,10 +434,10 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
     },
     startButton: {
-        width: '80%',
-        position: 'absolute',
-        bottom: 50,
-        alignSelf: 'center',
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        maxWidth: 120,
     },
     puzzleButton: {
         width: '80%',
@@ -455,6 +447,7 @@ const styles = StyleSheet.create({
         height: 50,
         justifyContent: 'center',
         alignItems: 'center',
+        alignSelf: 'center',
     },
     startButtonDisabled: {
         backgroundColor: '#999',

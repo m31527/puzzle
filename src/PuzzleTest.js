@@ -42,10 +42,9 @@ const screenHeight = Dimensions.get('window').height;
 const GRID_OFFSET_X = (screenWidth - GRID_SIZE) / 4; // 水平對齊
 const GRID_OFFSET_Y = 50; // 垂直位置
 
-const PuzzleTest = () => {
-  const navigation = useNavigation();
-  const [pieces, setPieces] = useState([]);
-  const [completed, setCompleted] = useState(new Array(TOTAL_PIECES).fill(false));
+const PuzzleTest = ({ gameData, completed: parentCompleted, handleAutoComplete, handlePiecePress, pieces: parentPieces, navigation }) => {
+  const [pieces, setPieces] = useState(parentPieces || []);
+  const [completed, setCompleted] = useState(parentCompleted || new Array(TOTAL_PIECES).fill(false));
   const [completedCount, setCompletedCount] = useState(0);
 
   // 重置遊戲狀態
@@ -108,7 +107,7 @@ const PuzzleTest = () => {
     setPieces(initialPieces);
   };
 
-  const handleAutoComplete = () => {
+  const completeAllPieces = () => {
     const newPieces = [...pieces];
     newPieces.forEach(piece => {
       const correctPos = correctPositions[piece.id];
@@ -118,22 +117,7 @@ const PuzzleTest = () => {
     setPieces(newPieces);
     setCompleted(new Array(TOTAL_PIECES).fill(true));
     setCompletedCount(TOTAL_PIECES);
-    Alert.alert(
-      '恭喜完成！',
-      '你已經完成了所有拼圖！',
-      [
-        
-        {
-          text: '重新一次',
-          onPress: resetGame,
-          style: 'cancel'
-        },
-        {
-          text: '查看報告',
-          onPress: () => navigation.navigate('Report')
-        }
-      ]
-    );
+    handleAutoComplete(); // 調用從 props 傳入的 handleAutoComplete
   };
 
   const correctPositions = {
@@ -288,22 +272,7 @@ const PuzzleTest = () => {
 
             // 檢查是否全部完成
             if (newCount === TOTAL_PIECES) {
-              Alert.alert(
-                '恭喜完成！',
-                '你已經完成了所有拼圖！',
-                [
-                  
-                  {
-                    text: '重新一次',
-                    onPress: resetGame,
-                    style: 'cancel'
-                  },
-                  {
-                    text: '查看報告',
-                    onPress: () => navigation.navigate('Report')
-                  }
-                ]
-              );
+              completeAllPieces();
             }
           }
         }
