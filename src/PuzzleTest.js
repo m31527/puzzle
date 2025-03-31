@@ -118,6 +118,22 @@ const PuzzleTest = () => {
     setPieces(newPieces);
     setCompleted(new Array(TOTAL_PIECES).fill(true));
     setCompletedCount(TOTAL_PIECES);
+    Alert.alert(
+      '恭喜完成！',
+      '你已經完成了所有拼圖！',
+      [
+        
+        {
+          text: '重新一次',
+          onPress: resetGame,
+          style: 'cancel'
+        },
+        {
+          text: '查看報告',
+          onPress: () => navigation.navigate('Report')
+        }
+      ]
+    );
   };
 
   const correctPositions = {

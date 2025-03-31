@@ -215,7 +215,7 @@ function gameDataReducer(state, action) {
 const ThrowResults = React.memo(({ gameState }) => {
   const recentThrows = 5;
   const throwHistory = (gameState.throwHistory || []).slice().reverse();  // 反轉陣列以顯示最新的結果在左邊
-  const accuracy = Math.round((gameState.successCount / GAME_CONFIG.MAX_THROWS) * 100);
+  const accuracy = gameState.throwCount > 0 ? Math.round((gameState.successCount / gameState.throwCount) * 100) : 0;
 
   // console.log('ThrowResults 渲染:', {
   //   throwCount: gameState.throwCount,
@@ -578,6 +578,8 @@ const Evaluate = forwardRef((props, ref) => {
     dispatch({ type: ACTION_TYPES.RESET_GAME });
   }, [dispatch]);
 
+  let gameData = {
+  };
   // 處理結束遊戲
   const handleEndGame = useCallback(async () => {
     try {
@@ -591,18 +593,7 @@ const Evaluate = forwardRef((props, ref) => {
       const score = calculateScore();
       const percentilePosition = calculatePercentilePosition();
       
-      const gameData = {
-        throwCount: gameState.throwCount,
-        successCount: gameState.successCount,
-        accuracy,
-        brainPower,
-        superPower,
-        endurance,
-        stability,
-        score,
-        percentilePosition,
-        timestamp: new Date().toISOString()
-      };
+      
 
       //console.log('遊戲結束，完整數據:', gameData);
       
@@ -615,8 +606,20 @@ const Evaluate = forwardRef((props, ref) => {
         subscriptionsRef.current = [];
       }
       
+      gameData = {
+        throwCount: gameState.throwCount,
+        successCount: gameState.successCount,
+        accuracy,
+        brainPower,
+        superPower,
+        endurance,
+        stability,
+        score,
+        percentilePosition,
+        timestamp: new Date().toISOString()
+      };
       // 導航到報告頁面，使用正確的數據格式
-      navigation.navigate('Report', {
+      navigation.navigate('NewReport', {
         gameData: gameData
       });
       
@@ -979,6 +982,7 @@ const Evaluate = forwardRef((props, ref) => {
         {/* End game button */}
         <View style={styles.pizzleGameZone}>
           <PuzzleTest
+            gameData={gameData}
             completed={completed}
             handleAutoComplete={handleAutoComplete}
             handlePiecePress={handlePiecePress}
@@ -1024,8 +1028,8 @@ const Evaluate = forwardRef((props, ref) => {
             <TouchableOpacity
               style={styles.reportButton}
               onPress={() => {
+                handleEndGame();
                 setShowCompletionModal(false);
-                navigation.navigate('Report');
               }}>
               <Text style={styles.reportButtonText}>查看報告</Text>
             </TouchableOpacity>
