@@ -7,6 +7,7 @@ $ /Users/sean/.nvm/versions/node/v18.20.3/bin/npm start
 出問題可以刪除 delete
 ~/.codeium/windsurf
 
+npx react-native start --reset-cache
 
 
 release build

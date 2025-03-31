@@ -626,7 +626,8 @@ const Evaluate = forwardRef((props, ref) => {
         // percentilePosition,
         timestamp: new Date().toISOString(),
         attentionHistory: validAttentionData,
-        meditationHistory: validMeditationData
+        meditationHistory: validMeditationData,
+        completionTime: timeCounter
       };
       // 導航到報告頁面，使用正確的數據格式
       navigation.navigate('NewReport', {
@@ -958,6 +959,17 @@ const Evaluate = forwardRef((props, ref) => {
     // 如果需要處理拼圖點擊事件
     console.log('Piece pressed:', index);
   };
+
+  // 初始化計時器
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeCounter(prev => prev + 1);
+    }, 1000);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
 
   // 初始化 TestDataGenerator
   useEffect(() => {
