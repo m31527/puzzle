@@ -215,7 +215,7 @@ function gameDataReducer(state, action) {
 const ThrowResults = React.memo(({ gameState }) => {
   const recentThrows = 5;
   const throwHistory = (gameState.throwHistory || []).slice().reverse();  // 反轉陣列以顯示最新的結果在左邊
-  const accuracy = gameState.throwCount > 0 ? Math.round((gameState.successCount / gameState.throwCount) * 100) : 0;
+  //const accuracy = gameState.throwCount > 0 ? Math.round((gameState.successCount / gameState.throwCount) * 100) : 0;
 
   // console.log('ThrowResults 渲染:', {
   //   throwCount: gameState.throwCount,
@@ -585,13 +585,13 @@ const Evaluate = forwardRef((props, ref) => {
     try {
       //console.log('準備結束遊戲，當前遊戲狀態:', gameState);
       
-      const accuracy = calculateAccuracy();
-      const brainPower = calculateBrainPower();
-      const superPower = calculateSuperPower();
-      const endurance = calculateEndurance();
-      const stability = calculateStability();
-      const score = calculateScore();
-      const percentilePosition = calculatePercentilePosition();
+      // const accuracy = calculateAccuracy();
+      // const brainPower = calculateBrainPower();
+      // const superPower = calculateSuperPower();
+      // const endurance = calculateEndurance();
+      // const stability = calculateStability();
+      // const score = calculateScore();
+      // const percentilePosition = calculatePercentilePosition();
       
       
 
@@ -606,17 +606,27 @@ const Evaluate = forwardRef((props, ref) => {
         subscriptionsRef.current = [];
       }
       
+      // 確保數據有效
+      const validAttentionData = Array.isArray(gameState.attentionData) 
+        ? gameState.attentionData.map(v => Number(v) || 0)
+        : [0];
+      const validMeditationData = Array.isArray(gameState.meditationData)
+        ? gameState.meditationData.map(v => Number(v) || 0)
+        : [0];
+
       gameData = {
         throwCount: gameState.throwCount,
         successCount: gameState.successCount,
-        accuracy,
-        brainPower,
-        superPower,
-        endurance,
-        stability,
-        score,
-        percentilePosition,
-        timestamp: new Date().toISOString()
+        // accuracy,
+        // brainPower,
+        // superPower,
+        // endurance,
+        // stability,
+        // score,
+        // percentilePosition,
+        timestamp: new Date().toISOString(),
+        attentionHistory: validAttentionData,
+        meditationHistory: validMeditationData
       };
       // 導航到報告頁面，使用正確的數據格式
       navigation.navigate('NewReport', {
