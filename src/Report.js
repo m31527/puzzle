@@ -73,6 +73,7 @@ const Report = () => {
     successCount = 0,
     throwCount = 0,
     score = 0,
+    completionTime = 0,
   } = reportData;
 
   const userName = '受試者';
@@ -166,7 +167,7 @@ const Report = () => {
           <SvgText
             x={labelX}
             y={labelY}
-            fill="#FFFFFF"
+            fill="#000000"
             fontSize="14"
             fontWeight="bold"
             textAnchor="middle"
@@ -205,8 +206,8 @@ const Report = () => {
       <G>
         <Path
           d={pathD}
-          fill="rgba(255, 255, 255, 0.3)"
-          stroke="rgba(255, 255, 255, 0.2)"
+          fill="rgba(248, 196, 196, 0.3)"
+          stroke="rgba(251, 142, 142, 0.2)"
           strokeWidth={2}
         />
         {values.map((value, i) => {
@@ -221,12 +222,12 @@ const Report = () => {
                 cx={x}
                 cy={y}
                 r={4}
-                fill="#FFFFFF"
+                fill="#000000"
               />
               <SvgText
                 x={x}
                 y={y - 10}
-                fill="#FFFFFF"
+                fill="#000000"
                 fontSize="12"
                 textAnchor="middle"
               >
@@ -269,7 +270,7 @@ const Report = () => {
       <View style={styles.contentContainer}>
         {renderAbilityChart()}
         
-        <Text style={styles.nameText}>姓名：{userName}</Text>
+        <Text style={styles.nameText}>姓名：{userName} , 完成時間：{completionTime} 秒</Text>
         
         <View style={styles.statsContainer}>
           <View style={[styles.statsBox, styles.throwsBox]}>
@@ -329,11 +330,11 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     alignItems: 'center',
-    marginTop: 40,
+    marginTop: 20,
   },
   titleText: {
     fontSize: 24,
-    color: '#FFFFFF',
+    color: '#1D417D',
     fontWeight: 'bold',
   },
   contentContainer: {
@@ -345,8 +346,8 @@ const styles = StyleSheet.create({
   },
   nameText: {
     fontSize: 18,
-    color: '#FFFFFF',
-    marginTop: 20,
+    color: '#000000',
+    marginTop: 10,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -363,16 +364,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   throwsBox: {
-    backgroundColor: '#8BA07E',
+    backgroundColor: 'rgba(166, 142, 8, 0.78)',  // 金色背景
   },
   successBox: {
-    backgroundColor: '#8BA07E',
+    backgroundColor: 'rgba(166, 142, 8, 0.78)',  // 金色背景
   },
   scoreBox: {
-    backgroundColor: '#7B92AA',
+    backgroundColor: 'rgba(166, 142, 8, 0.78)',  // 金色背景
   },
   percentileBox: {
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',  // 金色背景
+    backgroundColor: 'rgba(166, 142, 8, 0.78)',  // 金色背景
   },
   statsLabel: {
     color: '#FFFFFF',
