@@ -91,6 +91,15 @@ const Report = () => {
 
   const percentilePosition = calculatePercentile();
 
+  // 根據分數範圍獲取級別
+  const getLevel = (score) => {
+    if (score >= 0 && score <= 30) return 1;
+    if (score >= 31 && score <= 45) return 2;
+    if (score >= 46 && score <= 60) return 3;
+    if (score >= 61 && score <= 100) return 4;
+    return 1; // 默認為1級
+  };
+
   // 圓形圖表的參數
   const windowWidth = Dimensions.get('window').width;
   const centerX = windowWidth / 2;
@@ -134,7 +143,7 @@ const Report = () => {
     const axes = [];
     const numAxes = 4;
     const angleStep = (2 * Math.PI) / numAxes;
-    const labels = ['超能力', '腦力', '維持度', '穩定度'];
+    const labels = ['协调力', '脑活力', '专注力', '感知力'];
     const labelOffset = 25;
 
     for (let i = 0; i < numAxes; i++) {
@@ -264,20 +273,20 @@ const Report = () => {
         
         <View style={styles.statsContainer}>
           <View style={[styles.statsBox, styles.throwsBox]}>
-            <Text style={styles.statsLabel}>投出次數</Text>
-            <Text style={styles.statsValue}>{throwCount}/{GAME_CONFIG.MAX_THROWS}</Text>
+            <Text style={styles.statsLabel}>协调力</Text>
+            <Text style={styles.statsValue}>{getLevel(brainPower)}级</Text>
           </View>
           <View style={[styles.statsBox, styles.successBox]}>
-            <Text style={styles.statsLabel}>投中</Text>
-            <Text style={styles.statsValue}>{successCount}</Text>
+            <Text style={styles.statsLabel}>脑活力</Text>
+            <Text style={styles.statsValue}>{getLevel(superPower)}级</Text>
           </View>
           <View style={[styles.statsBox, styles.scoreBox]}>
-            <Text style={styles.statsLabel}>綜合分數</Text>
-            <Text style={styles.statsValue}>{finalScore}</Text>
+            <Text style={styles.statsLabel}>专注力</Text>
+            <Text style={styles.statsValue}>{getLevel(stability)}级</Text>
           </View>
           <View style={[styles.statsBox, styles.percentileBox]}>
-            <Text style={styles.statsLabel}>群眾比例</Text>
-            <Text style={styles.statsValue}>{100 - percentilePosition}%</Text>
+            <Text style={styles.statsLabel}>感知力</Text>
+            <Text style={styles.statsValue}>{getLevel(endurance)}级</Text>
           </View>
         </View>
       </View>
@@ -392,7 +401,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: '#000000',
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',

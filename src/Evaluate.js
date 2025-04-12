@@ -40,7 +40,14 @@ const initialState = {
     meditation: [],
     timestamps: []
   },
-  thetaValues: []  // 新增 theta 值的追蹤
+  thetaValues: [],  // 新增 theta 值的追蹤
+  deltaValues: [],  // 新增 delta 值的追蹤
+  lowAlphaValues: [],  // 新增 lowAlpha 值的追蹤
+  highAlphaValues: [],  // 新增 highAlpha 值的追蹤
+  lowBetaValues: [],  // 新增 lowBeta 值的追蹤
+  highBetaValues: [],  // 新增 highBeta 值的追蹤
+  lowGammaValues: [],  // 新增 lowGamma 值的追蹤
+  midGammaValues: []  // 新增 midGamma 值的追蹤
 };
 
 // 定義 reducer action types
@@ -52,6 +59,13 @@ const ACTION_TYPES = {
   UPDATE_RAW_DATA: 'UPDATE_RAW_DATA',
   UPDATE_ENDURANCE_DATA: 'UPDATE_ENDURANCE_DATA',
   UPDATE_THETA: 'UPDATE_THETA',  // 新增 theta 更新的 action type
+  UPDATE_DELTA: 'UPDATE_DELTA',  // 新增 delta 更新的 action type
+  UPDATE_LOW_ALPHA: 'UPDATE_LOW_ALPHA',  // 新增 lowAlpha 更新的 action type
+  UPDATE_HIGH_ALPHA: 'UPDATE_HIGH_ALPHA',  // 新增 highAlpha 更新的 action type
+  UPDATE_LOW_BETA: 'UPDATE_LOW_BETA',  // 新增 lowBeta 更新的 action type
+  UPDATE_HIGH_BETA: 'UPDATE_HIGH_BETA',  // 新增 highBeta 更新的 action type
+  UPDATE_LOW_GAMMA: 'UPDATE_LOW_GAMMA',  // 新增 lowGamma 更新的 action type
+  UPDATE_MID_GAMMA: 'UPDATE_MID_GAMMA',  // 新增 midGamma 更新的 action type
   RESET_GAME: 'RESET_GAME'
 };
 
@@ -463,10 +477,61 @@ const Evaluate = forwardRef((props, ref) => {
         // 添加事件監聽器並保存到 ref 中
         subscriptionsRef.current = [
           neuroSkyEmitter.addListener('onEegPower', (eegPower) => {
+            // 更新所有腦電波頻段數據
             if (typeof eegPower.theta === 'number') {
               dispatch({
                 type: ACTION_TYPES.UPDATE_THETA,
                 payload: { value: eegPower.theta }
+              });
+            }
+            
+            // 更新其他頻段數據
+            if (typeof eegPower.delta === 'number') {
+              dispatch({
+                type: ACTION_TYPES.UPDATE_DELTA,
+                payload: { value: eegPower.delta }
+              });
+            }
+            
+            if (typeof eegPower.lowAlpha === 'number') {
+              dispatch({
+                type: ACTION_TYPES.UPDATE_LOW_ALPHA,
+                payload: { value: eegPower.lowAlpha }
+              });
+            }
+            
+            if (typeof eegPower.highAlpha === 'number') {
+              dispatch({
+                type: ACTION_TYPES.UPDATE_HIGH_ALPHA,
+                payload: { value: eegPower.highAlpha }
+              });
+            }
+            
+            if (typeof eegPower.lowBeta === 'number') {
+              dispatch({
+                type: ACTION_TYPES.UPDATE_LOW_BETA,
+                payload: { value: eegPower.lowBeta }
+              });
+            }
+            
+            if (typeof eegPower.highBeta === 'number') {
+              dispatch({
+                type: ACTION_TYPES.UPDATE_HIGH_BETA,
+                payload: { value: eegPower.highBeta }
+              });
+            }
+            
+            if (typeof eegPower.lowGamma === 'number') {
+              dispatch({
+                type: ACTION_TYPES.UPDATE_LOW_GAMMA,
+                payload: { value: eegPower.lowGamma }
+              });
+            }
+            
+            if (typeof eegPower.midGamma === 'number') {
+              dispatch({
+                type: ACTION_TYPES.UPDATE_MID_GAMMA,
+                payload: { value: eegPower.midGamma }
               });
             }
           }),
@@ -585,18 +650,29 @@ const Evaluate = forwardRef((props, ref) => {
     try {
       //console.log('準備結束遊戲，當前遊戲狀態:', gameState);
       
-      // const accuracy = calculateAccuracy();
+      const accuracy = calculateAccuracy();
       // const brainPower = calculateBrainPower();
       // const superPower = calculateSuperPower();
       // const endurance = calculateEndurance();
       // const stability = calculateStability();
-      // const score = calculateScore();
-      // const percentilePosition = calculatePercentilePosition();
       
+      // 確保分數不會達到100，如果是100分則隨機給97-99分
+      const capScore = (score) => {
+        if (score >= 100) {
+          return 97 + Math.floor(Math.random() * 3); // 隨機生成 97, 98, 或 99
+        }
+        return score;
+      };
       
+      const brainPower = capScore(calculateCoordinationAbility());//协调力（Coordination Ability）
+      const superPower = capScore(calculateBrainActivity());//脑活力（Brain Activity）
+      const stability = capScore(calculateFocusAbility());//专注力（Focus Ability）
+      const endurance = capScore(calculatePerceptionAbility());//感知力（Perception Ability）
 
-      //console.log('遊戲結束，完整數據:', gameData);
-      
+
+      const score = calculateScore();
+      const percentilePosition = calculatePercentilePosition();
+            
       // 儲存遊戲數據
       await Database.saveGameRecord(gameData);
       
@@ -617,20 +693,23 @@ const Evaluate = forwardRef((props, ref) => {
       gameData = {
         throwCount: gameState.throwCount,
         successCount: gameState.successCount,
-        // accuracy,
-        // brainPower,
-        // superPower,
-        // endurance,
-        // stability,
-        // score,
-        // percentilePosition,
+        accuracy,
+        brainPower,
+        superPower,
+        endurance,
+        stability,
+        score,
+        percentilePosition,
         timestamp: new Date().toISOString(),
         attentionHistory: validAttentionData,
         meditationHistory: validMeditationData,
         completionTime: timeCounter
       };
+
+      console.log('遊戲結束，完整數據:', gameData);
+
       // 導航到報告頁面，使用正確的數據格式
-      navigation.navigate('NewReport', {
+      navigation.navigate('Report', {
         gameData: gameData
       });
       
@@ -648,6 +727,10 @@ const Evaluate = forwardRef((props, ref) => {
     calculateSuperPower,
     calculateEndurance,
     calculateStability,
+    calculateCoordinationAbility,
+    calculateBrainActivity,
+    calculateFocusAbility,
+    calculatePerceptionAbility,
     calculateScore,
     calculatePercentilePosition,
     navigation,
@@ -718,6 +801,184 @@ const Evaluate = forwardRef((props, ref) => {
     
     return score;
   }, []);
+
+  // 標準化腦電波頻段數據
+  const normalizeEegValues = useCallback((values) => {
+    if (!values || values.length === 0) return [];
+    
+    // 找出最大值和最小值
+    const max = Math.max(...values);
+    const min = Math.min(...values);
+    
+    // 避免除以零
+    if (max === min) return values.map(() => 0.5);
+    
+    // 標準化到 0-1 範圍
+    return values.map(value => (value - min) / (max - min));
+  }, []);
+
+  // 計算協調力 (Coordination Ability)
+  const calculateCoordinationAbility = useCallback(() => {
+    if (!gameState.thetaValues || gameState.thetaValues.length === 0) return 50;
+    
+    // 獲取各腦電波頻段數據
+    const eegPower = {};
+    
+    // 使用 reducer 中的 thetaValues
+    eegPower.theta = gameState.thetaValues || [];
+    
+    // 從 onEegPower 事件獲取的其他頻段數據
+    // 如果沒有這些數據，使用空數組
+    eegPower.delta = gameState.deltaValues || [];
+    eegPower.lowAlpha = gameState.lowAlphaValues || [];
+    eegPower.highAlpha = gameState.highAlphaValues || [];
+    eegPower.lowBeta = gameState.lowBetaValues || [];
+    eegPower.highBeta = gameState.highBetaValues || [];
+    eegPower.lowGamma = gameState.lowGammaValues || [];
+    eegPower.midGamma = gameState.midGammaValues || [];
+    
+    // 標準化各頻段數據
+    const normalizedValues = [];
+    for (const band in eegPower) {
+      if (eegPower[band] && eegPower[band].length > 0) {
+        // 計算平均值
+        const avg = eegPower[band].reduce((sum, val) => sum + val, 0) / eegPower[band].length;
+        normalizedValues.push(avg);
+      }
+    }
+    
+    // 如果沒有足夠的數據，返回默認值
+    if (normalizedValues.length < 2) return 50;
+    
+    // 標準化數據
+    const normalized = normalizeEegValues(normalizedValues);
+    
+    // 計算標準差
+    const mean = normalized.reduce((sum, val) => sum + val, 0) / normalized.length;
+    const variance = normalized.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / normalized.length;
+    const stdDev = Math.sqrt(variance);
+    
+    // 計算協調力: 100 - (標準差 × 0.5)
+    const coordinationScore = 100 - (stdDev * 50);
+    
+    // 確保分數在 0-100 範圍內
+    return Math.max(0, Math.min(100, Math.round(coordinationScore)));
+  }, [gameState.thetaValues, gameState.deltaValues, gameState.lowAlphaValues, gameState.highAlphaValues, 
+      gameState.lowBetaValues, gameState.highBetaValues, gameState.lowGammaValues, gameState.midGammaValues, normalizeEegValues]);
+
+  // 計算腦活力 (Brain Activity)
+  const calculateBrainActivity = useCallback(() => {
+    // 獲取需要的頻段數據
+    const lowBetaValues = gameState.lowBetaValues || [];
+    const highBetaValues = gameState.highBetaValues || [];
+    const lowGammaValues = gameState.lowGammaValues || [];
+    const midGammaValues = gameState.midGammaValues || [];
+    
+    // 如果沒有數據，返回默認值
+    if (lowBetaValues.length === 0 && highBetaValues.length === 0 && 
+        lowGammaValues.length === 0 && midGammaValues.length === 0) {
+      return 50;
+    }
+    
+    // 計算各頻段的平均值
+    const avgLowBeta = lowBetaValues.length > 0 ? 
+      lowBetaValues.reduce((sum, val) => sum + val, 0) / lowBetaValues.length : 0;
+    const avgHighBeta = highBetaValues.length > 0 ? 
+      highBetaValues.reduce((sum, val) => sum + val, 0) / highBetaValues.length : 0;
+    const avgLowGamma = lowGammaValues.length > 0 ? 
+      lowGammaValues.reduce((sum, val) => sum + val, 0) / lowGammaValues.length : 0;
+    const avgMidGamma = midGammaValues.length > 0 ? 
+      midGammaValues.reduce((sum, val) => sum + val, 0) / midGammaValues.length : 0;
+    
+    // 將所有非零平均值放入數組
+    const values = [];
+    if (avgLowBeta > 0) values.push(avgLowBeta);
+    if (avgHighBeta > 0) values.push(avgHighBeta);
+    if (avgLowGamma > 0) values.push(avgLowGamma);
+    if (avgMidGamma > 0) values.push(avgMidGamma);
+    
+    // 如果沒有有效數據，返回默認值
+    if (values.length === 0) return 50;
+    
+    // 標準化數據
+    const normalized = normalizeEegValues(values);
+    
+    // 計算腦活力: (歸一化的 Low Beta + 歸一化的 High Beta + 歸一化的 Low Gamma + 歸一化的 Mid Gamma) / 4
+    // 如果某些頻段沒有數據，我們只計算有數據的頻段
+    const brainActivityScore = (normalized.reduce((sum, val) => sum + val, 0) / normalized.length) * 100;
+    
+    // 確保分數在 0-100 範圍內
+    return Math.max(0, Math.min(100, Math.round(brainActivityScore)));
+  }, [gameState.lowBetaValues, gameState.highBetaValues, gameState.lowGammaValues, gameState.midGammaValues, normalizeEegValues]);
+
+  // 計算專注力 (Focus Ability)
+  const calculateFocusAbility = useCallback(() => {
+    // 獲取需要的頻段數據
+    const alphaValues = [...(gameState.lowAlphaValues || []), ...(gameState.highAlphaValues || [])];
+    const betaValues = [...(gameState.lowBetaValues || []), ...(gameState.highBetaValues || [])];
+    
+    // 如果沒有數據，使用 attentionData 作為替代
+    if ((alphaValues.length === 0 || betaValues.length === 0) && gameState.attentionData && gameState.attentionData.length > 0) {
+      return calculateAverageAttention();
+    }
+    
+    // 如果仍然沒有數據，返回默認值
+    if (alphaValues.length === 0 || betaValues.length === 0) {
+      return 50;
+    }
+    
+    // 計算 Alpha 和 Beta 的平均值
+    const avgAlpha = alphaValues.reduce((sum, val) => sum + val, 0) / alphaValues.length;
+    const avgBeta = betaValues.reduce((sum, val) => sum + val, 0) / betaValues.length;
+    
+    // 標準化數據
+    const normalizedValues = normalizeEegValues([avgAlpha, avgBeta]);
+    const normalizedAlpha = normalizedValues[0];
+    const normalizedBeta = normalizedValues[1];
+    
+    // 計算專注力: [Beta / (Alpha + Beta)] × 100
+    // 避免除以零
+    if (normalizedAlpha + normalizedBeta === 0) return 50;
+    
+    const focusScore = (normalizedBeta / (normalizedAlpha + normalizedBeta)) * 100;
+    
+    // 確保分數在 0-100 範圍內
+    return Math.max(0, Math.min(100, Math.round(focusScore)));
+  }, [gameState.lowAlphaValues, gameState.highAlphaValues, gameState.lowBetaValues, gameState.highBetaValues, 
+      gameState.attentionData, calculateAverageAttention, normalizeEegValues]);
+
+  // 計算感知力 (Perception Ability)
+  const calculatePerceptionAbility = useCallback(() => {
+    // 獲取需要的頻段數據
+    const thetaValues = gameState.thetaValues || [];
+    const gammaValues = [...(gameState.lowGammaValues || []), ...(gameState.midGammaValues || [])];
+    
+    // 如果沒有數據，返回默認值
+    if (thetaValues.length === 0 && gammaValues.length === 0) {
+      return 50;
+    }
+    
+    // 計算 Theta 和 Gamma 的平均值
+    const avgTheta = thetaValues.length > 0 ? 
+      thetaValues.reduce((sum, val) => sum + val, 0) / thetaValues.length : 0;
+    const avgGamma = gammaValues.length > 0 ? 
+      gammaValues.reduce((sum, val) => sum + val, 0) / gammaValues.length : 0;
+    
+    // 如果只有一種數據可用
+    if (thetaValues.length === 0) return Math.min(100, Math.max(0, avgGamma / 10000 * 100));
+    if (gammaValues.length === 0) return Math.min(100, Math.max(0, avgTheta / 10000 * 100));
+    
+    // 標準化數據
+    const normalizedValues = normalizeEegValues([avgTheta, avgGamma]);
+    const normalizedTheta = normalizedValues[0];
+    const normalizedGamma = normalizedValues[1];
+    
+    // 計算感知力: Theta × 0.4 + Gamma × 0.6
+    const perceptionScore = (normalizedTheta * 0.4 + normalizedGamma * 0.6) * 100;
+    
+    // 確保分數在 0-100 範圍內
+    return Math.max(0, Math.min(100, Math.round(perceptionScore)));
+  }, [gameState.thetaValues, gameState.lowGammaValues, gameState.midGammaValues, normalizeEegValues]);
 
   const calculateSuperPower = useCallback(() => {
     if (!gameState.thetaValues || gameState.thetaValues.length === 0) {
