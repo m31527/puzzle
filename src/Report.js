@@ -480,11 +480,74 @@ const Report = () => {
                   <h2>★ 腦活力：<span class="level">${brainActivityLevel}級 - ${brainActivityAssessment.title}</span></h2>
                   <p>${brainActivityAssessment.description}</p>
                   
+                  <p><strong>表现特征：</strong></p>
+                  <ul class="features">
+                    ${brainActivityAssessment.features.map(feature => `<li class="feature-item">${feature}</li>`).join('')}
+                  </ul>
+                  
+                  <p><strong>建議：</strong></p>
+                  <ul class="suggestions">
+                    ${brainActivityAssessment.suggestions.map(suggestion => `<li class="suggestion-item">${suggestion}</li>`).join('')}
+                  </ul>
+                  
                   <h2>★ 專注力：<span class="level">${focusLevel}級 - ${focusAssessment.title}</span></h2>
                   <p>${focusAssessment.description}</p>
                   
+                  <p><strong>表现特征：</strong></p>
+                  <ul class="features">
+                    ${focusAssessment.features.map(feature => `<li class="feature-item">${feature}</li>`).join('')}
+                  </ul>
+                  
+                  <p><strong>建議：</strong></p>
+                  <ul class="suggestions">
+                    ${focusAssessment.suggestions.map(suggestion => `<li class="suggestion-item">${suggestion}</li>`).join('')}
+                  </ul>
+                  
                   <h2>★ 感知力：<span class="level">${perceptionLevel}級 - ${perceptionAssessment.title}</span></h2>
                   <p>${perceptionAssessment.description}</p>
+                  
+                  <p><strong>表现特征：</strong></p>
+                  <ul class="features">
+                    ${perceptionAssessment.features.map(feature => `<li class="feature-item">${feature}</li>`).join('')}
+                  </ul>
+                  
+                  <p><strong>建議：</strong></p>
+                  <ul class="suggestions">
+                    ${perceptionAssessment.suggestions.map(suggestion => `<li class="suggestion-item">${suggestion}</li>`).join('')}
+                  </ul>
+
+                  <h2>综合评估</h2>
+                  <p>通过对四项指标的综合评估，我们可以了解个体的脑功能特点和潜力所在。这些指标不仅可以作为个人能力的参考，还可以指导有针对性的训练和发展计划。</p>
+                  
+                  <table border="1" cellpadding="5" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                      <th>等级组合</th>
+                      <th>特点描述</th>
+                      <th>发展建议</th>
+                    </tr>
+                    <tr>
+                      <td>全部为1级</td>
+                      <td>脑功能处于基础发展阶段，有较大提升空间</td>
+                      <td>从基础训练开始，全面提升各项能力</td>
+                    </tr>
+                    <tr>
+                      <td>1-2级为主</td>
+                      <td>脑功能发展不均衡，具备一定基础</td>
+                      <td>重点提升薄弱项，适度发展优势项</td>
+                    </tr>
+                    <tr>
+                      <td>2-3级为主</td>
+                      <td>脑功能发展良好，部分领域表现突出</td>
+                      <td>平衡发展各项能力，强化特长</td>
+                    </tr>
+                    <tr>
+                      <td>3-4级为主</td>
+                      <td>脑功能发展优异，具备综合优势</td>
+                      <td>挑战极限，发掘特殊才能</td>
+                    </tr>
+                  </table>
+
+                  <p>每个人的脑功能特点和发展潜力各不相同，本评估报告旨在提供参考和指导，而非绝对评判。通过有针对性的训练和发展，每个人都能够提升自己的脑功能水平，发挥更大潜力。</p>
                 </body>
                 </html>
               `;
