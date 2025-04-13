@@ -286,7 +286,7 @@ const PuzzleTest = ({ gameData, completed: parentCompleted, handleAutoComplete, 
       <View style={styles.progressContainer}>
         <Text style={styles.progressText}>{completedCount}/{TOTAL_PIECES}</Text>
         <Text onPress={handleAutoComplete} style={styles.autoCompleteButton}>
-          拼上
+          停止
         </Text>
       </View>
 

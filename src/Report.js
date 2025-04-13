@@ -11,7 +11,8 @@ import {
   Platform,
   ToastAndroid,
   Clipboard,
-  Linking
+  Linking,
+  Image
 } from 'react-native';
 import RNHTMLtoPDF from 'react-native-html-to-pdf';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
@@ -406,18 +407,18 @@ const Report = () => {
         
         <Text style={styles.nameText}>姓名：{userName} , 完成時間：{completionTime} 秒</Text>
          {/* 右上角查看報告按鈕 - 使用更明顯的按鈕樣式 */}
-         <TouchableOpacity 
+         <TouchableOpacity
           style={{
-            backgroundColor: '#4CAF50',
+            borderColor: '#FFC0CB', // Pink border
+            borderWidth: 2,
             padding: 10,
             borderRadius: 5,
-            marginRight: 10,
-            elevation: 3,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
-            shadowRadius: 3.84,
-          }} 
+            width: '80%', // Make the button longer
+            alignItems: 'center',
+            marginVertical: 10,
+            alignSelf: 'center',
+            backgroundColor: '#FFFFFF',
+          }}
           onPress={async () => {
             console.log('點擊了報告按鈕');
             
@@ -596,7 +597,7 @@ const Report = () => {
           }}
           activeOpacity={0.7}
         >
-          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>查看報告</Text>
+          <Text style={{ color: '#FFC0CB', fontWeight: 'bold', fontSize: 16 }}>查看報告</Text>
         </TouchableOpacity>
         <View style={styles.statsContainer}>
           <View style={[styles.statsBox, styles.throwsBox]}>
@@ -725,13 +726,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    padding: 20,
+    paddingBottom:20,
     width: '100%',
   },
   statsBox: {
     width: '40%',
     margin: '2%',
-    padding: 15,
+    padding: 5,
     borderRadius: 10,
     alignItems: 'center',
   },
