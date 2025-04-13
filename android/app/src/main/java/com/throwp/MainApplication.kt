@@ -1,7 +1,6 @@
 package com.throwp
 
 import android.app.Application
-import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeHost
@@ -9,9 +8,14 @@ import com.facebook.react.ReactPackage
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.soloader.SoLoader
+import com.facebook.react.PackageList
 import com.throwp.NeuroSkyPackage 
 import com.throwp.ESP32Package 
 import org.pgsqlite.SQLitePluginPackage
+import com.christopherdro.htmltopdf.RNHTMLtoPDFPackage
+import com.rnfs.RNFSPackage
+import com.vinzscam.reactnativefileviewer.RNFileViewerPackage
+
 
 class MainApplication : Application(), ReactApplication {
 
@@ -21,7 +25,10 @@ class MainApplication : Application(), ReactApplication {
           PackageList(this).packages.apply {
             add(NeuroSkyPackage())
             add(ESP32Package())
-            add(SQLitePluginPackage())  
+            add(SQLitePluginPackage()) 
+            add(RNHTMLtoPDFPackage())
+            add(RNFSPackage())
+            add(RNFileViewerPackage())
           }
 
         override fun getJSMainModuleName(): String = "index"

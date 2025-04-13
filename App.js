@@ -8,6 +8,7 @@ import Report from './src/Report';
 import History from './src/History';
 import PuzzleTest from './src/PuzzleTest';
 import NewReport from './src/NewReport';
+import PDFView from './src/PDFView';
 
 const Stack = createNativeStackNavigator();
 
@@ -44,6 +45,11 @@ const App = () => {
         <Stack.Screen 
           name="NewReport" 
           component={NewReport}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="PDFView" 
+          component={PDFView}
           options={{ headerShown: false }}
         />
         </Stack.Navigator>

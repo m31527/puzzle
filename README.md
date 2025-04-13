@@ -14,3 +14,13 @@ release build
 keytool -genkeypair -v -keystore throwp.jks -keyalg RSA -keysize 2048 -validity 10000 -alias throwp
 
 ./gradlew assembleRelease
+
+# reset cache and build
+npx react-native start --reset-cache
+
+
+## 我們需要添加 RNFS 和 FileViewer 的包到 MainApplication.kt：
+
+adb uninstall com.ycm.app.moldmaster
+./gradlew assembleRelease installRelease
+adb install app/build/outputs/apk/release/app-release.apk

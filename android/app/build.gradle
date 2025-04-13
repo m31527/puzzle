@@ -22,7 +22,7 @@ def enableProguardInReleaseBuilds = false
 def jscFlavor = 'org.webkit:android-jsc:+'
 
 project.ext.react = [
-    enableHermes: true,
+    enableHermes: false,
 ]
 
 android {
@@ -98,6 +98,10 @@ dependencies {
     // Add SoLoader dependency
     implementation "com.facebook.soloader:soloader:0.10.5"
     
+    // Add RNFS and FileViewer dependencies
+    implementation project(':react-native-fs')
+    implementation project(':react-native-file-viewer')
+    
     // Add MMKV dependency
     implementation "com.tencent:mmkv:1.2.14"
 
@@ -124,6 +128,9 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+
+    implementation project(':react-native-html-to-pdf')
+
 }
 
 //apply from: file("../../node_modules/@react-native/gradle-plugin/libs.gradle")

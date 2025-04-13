@@ -6,12 +6,19 @@ import {
   ImageBackground,
   TouchableOpacity,
   Dimensions,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert,
+  Platform,
+  ToastAndroid,
+  Clipboard,
+  Linking
 } from 'react-native';
+import RNHTMLtoPDF from 'react-native-html-to-pdf';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import Svg, { Circle, Line, Text as SvgText, Path, G } from 'react-native-svg';
 import { GAME_CONFIG } from './config/gameConfig';
 import { useAppState } from './context/AppStateContext';
+import { getLevel, getCoordinationAssessment, getBrainActivityAssessment, getFocusAbilityAssessment, getPerceptionAbilityAssessment } from './utils/reportUtils';
 
 const Report = () => {
   const navigation = useNavigation();
@@ -21,7 +28,7 @@ const Report = () => {
   
   // 確保從不同來源進入時都能正確獲取數據
   const [reportData, setReportData] = useState(null);
-  
+
   // 使用 useEffect 來處理頁面焦點變化
   useEffect(() => {
     if (isFocused) {
@@ -92,14 +99,7 @@ const Report = () => {
 
   const percentilePosition = calculatePercentile();
 
-  // 根據分數範圍獲取級別
-  const getLevel = (score) => {
-    if (score >= 0 && score <= 30) return 1;
-    if (score >= 31 && score <= 45) return 2;
-    if (score >= 46 && score <= 60) return 3;
-    if (score >= 61 && score <= 100) return 4;
-    return 1; // 默認為1級
-  };
+  // 圈形圖表的參數
 
   // 圓形圖表的參數
   const windowWidth = Dimensions.get('window').width;
@@ -258,6 +258,140 @@ const Report = () => {
     navigation.navigate('Evaluate');
   };
 
+  // 顯示詳細報告
+  const showDetailedReport = () => {
+    console.log('點擊了報告按鈕');
+    
+    // 简单测试Alert是否正常工作
+    Alert.alert(
+      '测试提示', 
+      '测试Alert组件是否正常工作',
+      [{ text: 'OK', onPress: () => console.log('OK Pressed') }]
+    );
+    
+    try {
+      console.log('开始获取级别信息');
+      // 獲取各項能力的評估級別
+      const coordinationLevel = getLevel(brainPower);
+      const brainActivityLevel = getLevel(superPower);
+      const focusLevel = getLevel(stability);
+      const perceptionLevel = getLevel(endurance);
+      
+      console.log('获取级别成功:', { coordinationLevel, brainActivityLevel, focusLevel, perceptionLevel });
+      
+      // 獲取協調力評估詳情
+      console.log('开始获取评估详情');
+      const coordinationAssessment = getCoordinationAssessment(coordinationLevel);
+      console.log('获取协调力评估成功');
+      
+      // 顯示協調力評估報告
+      console.log('尝试显示 Alert');
+      Alert.alert(
+        `協調力: ${coordinationLevel}级 - ${coordinationAssessment.title}`,
+        `${coordinationAssessment.description}\n\n表现特征:\n${coordinationAssessment.features.map(feature => `• ${feature}`).join('\n')}\n\n建议:\n${coordinationAssessment.suggestions.map(suggestion => `• ${suggestion}`).join('\n')}`,
+        [
+          { 
+            text: '查看脑活力', 
+            onPress: () => showBrainActivityReport(brainActivityLevel) 
+          },
+          { 
+            text: '关闭', 
+            style: 'cancel' 
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('顯示報告時發生錯誤:', error);
+      Alert.alert('錯誤', `顯示報告時發生錯誤: ${error.message || error}`);
+    }
+  };
+  
+  // 顯示腦活力報告
+  const showBrainActivityReport = (level) => {
+    const assessment = getBrainActivityAssessment(level);
+    Alert.alert(
+      `脑活力: ${level}级 - ${assessment.title}`,
+      assessment.description,
+      [
+        { 
+          text: '查看专注力', 
+          onPress: () => showFocusReport(getLevel(stability)) 
+        },
+        { 
+          text: '关闭', 
+          style: 'cancel' 
+        }
+      ]
+    );
+  };
+  
+  // 顯示專注力報告
+  const showFocusReport = (level) => {
+    const assessment = getFocusAbilityAssessment(level);
+    Alert.alert(
+      `专注力: ${level}级 - ${assessment.title}`,
+      assessment.description,
+      [
+        { 
+          text: '查看感知力', 
+          onPress: () => showPerceptionReport(getLevel(endurance)) 
+        },
+        { 
+          text: '关闭', 
+          style: 'cancel' 
+        }
+      ]
+    );
+  };
+  
+  // 顯示感知力報告
+  const showPerceptionReport = (level) => {
+    const assessment = getPerceptionAbilityAssessment(level);
+    Alert.alert(
+      `感知力: ${level}级 - ${assessment.title}`,
+      assessment.description,
+      [
+        { 
+          text: '完成', 
+          style: 'default' 
+        }
+      ]
+    );
+  };
+
+  // 生成 PDF 並打開查看
+  const handleDownload = async (htmlContent, fileName) => {
+    try {
+      console.log('開始生成 PDF...');
+      
+      // 生成 PDF 文件
+      const options = {
+        html: htmlContent,
+        fileName: fileName || `腦電波報告_${new Date().getTime()}`,
+        directory: 'Documents',
+        orientation: 'landscape', // Ensure A4 landscape
+        pageSize: 'A4', // Ensure it's A4
+      };
+      console.log('---RNHTMLtoPDF:', RNHTMLtoPDF);
+      const file = await RNHTMLtoPDF.convert(options);
+      console.log('生成的PDF文件路徑:', file.filePath);
+      
+      // 導航到 PDFView 頁面查看 PDF
+      navigation.navigate('PDFView', { pdfPath: file.filePath });
+      
+      // 顯示成功提示
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('報告生成成功', ToastAndroid.SHORT);
+      }
+      
+      return file.filePath;
+    } catch (error) {
+      console.error('生成PDF時發生錯誤:', error);
+      Alert.alert('錯誤', `生成PDF時發生錯誤: ${error.message || error}`);
+      return null;
+    }
+  };
+
   return (
     <ImageBackground
       source={require('../assets/img/background.png')}
@@ -271,7 +405,136 @@ const Report = () => {
         {renderAbilityChart()}
         
         <Text style={styles.nameText}>姓名：{userName} , 完成時間：{completionTime} 秒</Text>
-        
+         {/* 右上角查看報告按鈕 - 使用更明顯的按鈕樣式 */}
+         <TouchableOpacity 
+          style={{
+            backgroundColor: '#4CAF50',
+            padding: 10,
+            borderRadius: 5,
+            marginRight: 10,
+            elevation: 3,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+          }} 
+          onPress={async () => {
+            console.log('點擊了報告按鈕');
+            
+            try {
+              // 顯示變化提示
+              Alert.alert('提示', '正在生成報告...');
+              
+              // 獲取各項能力的評估級別
+              const coordinationLevel = getLevel(brainPower);
+              const brainActivityLevel = getLevel(superPower);
+              const focusLevel = getLevel(stability);
+              const perceptionLevel = getLevel(endurance);
+              
+              // 獲取各項能力的評估詳情
+              const coordinationAssessment = getCoordinationAssessment(coordinationLevel);
+              const brainActivityAssessment = getBrainActivityAssessment(brainActivityLevel);
+              const focusAssessment = getFocusAbilityAssessment(focusLevel);
+              const perceptionAssessment = getPerceptionAbilityAssessment(perceptionLevel);
+              
+              // 創建 HTML 報告內容
+              const htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                  <meta charset="utf-8">
+                  <title>脑電波分析報告</title>
+                  <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    h1 { color: #4CAF50; text-align: center; }
+                    h2 { color: #2196F3; margin-top: 20px; }
+                    .info { background-color: #f5f5f5; padding: 10px; border-radius: 5px; }
+                    .level { font-weight: bold; color: #FF5722; }
+                    .features { margin-left: 20px; }
+                    .suggestions { margin-left: 20px; }
+                    .feature-item, .suggestion-item { margin-bottom: 5px; }
+                  </style>
+                </head>
+                <body>
+                  <h1>脑電波指標等級評估報告</h1>
+                  
+                  <div class="info">
+                    <p><strong>姓名：</strong>${userName}</p>
+                    <p><strong>完成時間：</strong>${completionTime} 秒</p>
+                    <p><strong>報告生成時間：</strong>${new Date().toLocaleString()}</p>
+                  </div>
+                  
+                  <h2>★ 協調力：<span class="level">${coordinationLevel}級 - ${coordinationAssessment.title}</span></h2>
+                  <p>${coordinationAssessment.description}</p>
+                  
+                  <p><strong>表现特征：</strong></p>
+                  <ul class="features">
+                    ${coordinationAssessment.features.map(feature => `<li class="feature-item">${feature}</li>`).join('')}
+                  </ul>
+                  
+                  <p><strong>建議：</strong></p>
+                  <ul class="suggestions">
+                    ${coordinationAssessment.suggestions.map(suggestion => `<li class="suggestion-item">${suggestion}</li>`).join('')}
+                  </ul>
+                  
+                  <h2>★ 腦活力：<span class="level">${brainActivityLevel}級 - ${brainActivityAssessment.title}</span></h2>
+                  <p>${brainActivityAssessment.description}</p>
+                  
+                  <h2>★ 專注力：<span class="level">${focusLevel}級 - ${focusAssessment.title}</span></h2>
+                  <p>${focusAssessment.description}</p>
+                  
+                  <h2>★ 感知力：<span class="level">${perceptionLevel}級 - ${perceptionAssessment.title}</span></h2>
+                  <p>${perceptionAssessment.description}</p>
+                </body>
+                </html>
+              `;
+              
+              try {
+                // 使用 handleDownload 函數生成 PDF
+                const fileName = `腦電波報告_${userName}_${new Date().getTime()}`;
+                await handleDownload(htmlContent, fileName);
+              } catch (error) {
+                console.log('RNHTMLtoPDF 不可用，使用備用方案...', error);
+                // 備用方案：顯示報告內容
+                Alert.alert(
+                  '腦電波評估報告',
+                  `姓名：${userName}\n完成時間：${completionTime} 秒\n\n協調力: ${coordinationLevel}級 - ${coordinationAssessment.title}\n腦活力: ${brainActivityLevel}級 - ${brainActivityAssessment.title}\n專注力: ${focusLevel}級 - ${focusAssessment.title}\n感知力: ${perceptionLevel}級 - ${perceptionAssessment.title}`,
+                  [
+                    { 
+                      text: '複製報告', 
+                      onPress: () => {
+                        const reportText = `腦電波評估報告\n\n姓名：${userName}\n完成時間：${completionTime} 秒\n\n協調力: ${coordinationLevel}級 - ${coordinationAssessment.title}\n${coordinationAssessment.description}\n\n腦活力: ${brainActivityLevel}級 - ${brainActivityAssessment.title}\n${brainActivityAssessment.description}\n\n專注力: ${focusLevel}級 - ${focusAssessment.title}\n${focusAssessment.description}\n\n感知力: ${perceptionLevel}級 - ${perceptionAssessment.title}\n${perceptionAssessment.description}`;
+                        Clipboard.setString(reportText);
+                        if (Platform.OS === 'android') {
+                          ToastAndroid.show('報告已複製到剪貼板', ToastAndroid.SHORT);
+                        } else {
+                          Alert.alert('成功', '報告已複製到剪貼板');
+                        }
+                      } 
+                    },
+                    { 
+                      text: '關閉', 
+                      style: 'cancel' 
+                    }
+                  ]
+                );
+              }
+              
+            } catch (error) {
+              console.error('生成PDF報告時發生錯誤:', error);
+              
+              // 如果 PDF 生成失敗，則顯示簡化報告
+              Alert.alert(
+                '脑電波評估報告', 
+                `姓名：${userName}\n完成時間：${completionTime} 秒\n\n協調力: ${coordinationLevel}級 - ${coordinationAssessment.title}\n腦活力: ${brainActivityLevel}級 - ${brainActivityAssessment.title}\n專注力: ${focusLevel}級 - ${focusAssessment.title}\n感知力: ${perceptionLevel}級 - ${perceptionAssessment.title}`,
+                [{ text: 'OK', style: 'default' }]
+              );
+            }
+          }}
+          activeOpacity={0.7}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>查看報告</Text>
+        </TouchableOpacity>
         <View style={styles.statsContainer}>
           <View style={[styles.statsBox, styles.throwsBox]}>
             <Text style={styles.statsLabel}>协调力</Text>
@@ -329,8 +592,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#D2B48C',
   },
   titleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     marginTop: 20,
+    width: '100%',
+    position: 'relative',
   },
   titleText: {
     fontSize: 24,
@@ -348,6 +615,48 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#000000',
     marginTop: 10,
+  },
+  downloadButton: {
+    position: 'absolute',
+    right: 20,
+    top: 0,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  downloadIconContainer: {
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(166, 142, 8, 0.78)',
+    borderRadius: 15,
+    padding: 5,
+  },
+  downloadIcon: {
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  downloadArrow: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 8,
+    borderStyle: 'solid',
+    backgroundColor: 'transparent',
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#FFFFFF',
+    marginBottom: 2,
+  },
+  downloadBase: {
+    width: 12,
+    height: 4,
+    backgroundColor: '#FFFFFF',
   },
   statsContainer: {
     flexDirection: 'row',
