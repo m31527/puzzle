@@ -19,8 +19,11 @@ keytool -genkeypair -v -keystore throwp.jks -keyalg RSA -keysize 2048 -validity 
 npx react-native start --reset-cache
 
 
-## 我們需要添加 RNFS 和 FileViewer 的包到 MainApplication.kt：
+## 我們需要添加 RNFS 和 FileSystem FileViewer 的包到 MainApplication.kt：
 
 adb uninstall com.ycm.app.moldmaster
 ./gradlew assembleRelease installRelease
 adb install app/build/outputs/apk/release/app-release.apk
+
+#gh auth logout
+gh auth login

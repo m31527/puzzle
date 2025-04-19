@@ -15,18 +15,18 @@ const History = () => {
   const navigation = useNavigation();
   const [records, setRecords] = useState([]);
 
-  // 加載遊戲記錄
+  // 加载游戏记录
   useEffect(() => {
     loadGameRecords();
   }, []);
 
   const loadGameRecords = async () => {
     try {
-      await Database.initDB(); // 確保數據庫已初始化
+      await Database.initDB(); // 确保数据库已初始化
       const loadedRecords = await Database.getAllGameRecords();
       setRecords(loadedRecords);
     } catch (error) {
-      console.error('載入記錄時發生錯誤:', error);
+      console.error('加载记录时发生错误:', error);
     }
   };
 
@@ -34,26 +34,26 @@ const History = () => {
     navigation.navigate('Evaluate');
   };
 
-  // 刪除記錄
+  // 删除记录
   const deleteRecord = async (timestamp) => {
     try {
-      await Database.initDB(); // 確保數據庫已初始化
+      await Database.initDB(); // 确保数据库已初始化
       await Database.deleteGameRecord(timestamp);
-      // 重新加載記錄
+      // 重新加载记录
       loadGameRecords();
     } catch (error) {
-      console.error('刪除記錄時發生錯誤:', error);
-      Alert.alert('錯誤', '刪除記錄失敗');
+      console.error('删除记录时发生错误:', error);
+      Alert.alert('错误', '删除记录失败');
     }
   };
 
-  // 查看詳細記錄
+  // 查看详细记录
   const viewRecord = (record) => {
-    // 將歷史記錄數據包裝成正確的格式
+    // 将历史记录数据包装成正确的格式
     navigation.navigate('Report', {
       historyData: {
         ...record,
-        // 確保所有必要的字段都存在
+        // 确保所有必要的字段都存在
         superPower: record.superPower || 0,
         brainPower: record.brainPower || 0,
         endurance: record.endurance || 0,
@@ -66,7 +66,7 @@ const History = () => {
     });
   };
 
-  // 格式化時間戳
+  // 格式化时间戳
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -86,16 +86,16 @@ const History = () => {
           <TouchableOpacity onPress={goBack} style={styles.backButton}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>拼圖遊戲</Text>
+          <Text style={styles.title}>拼图游戏</Text>
         </View>
 
-        <Text style={styles.subtitle}>歷史記錄</Text>
+        <Text style={styles.subtitle}>历史记录</Text>
 
         <View style={styles.tableHeader}>
-          <Text style={styles.tableHeaderText}>時間</Text>
+          <Text style={styles.tableHeaderText}>时间</Text>
           <Text style={styles.tableHeaderText}>姓名</Text>
-          <Text style={styles.tableHeaderText}>命中</Text>
-          <Text style={styles.tableHeaderText}>分數</Text>
+          <Text style={styles.tableHeaderText}>计时</Text>
+          <Text style={styles.tableHeaderText}>分数</Text>
         </View>
         <FlatList
           data={records}
@@ -107,29 +107,29 @@ const History = () => {
             >
               <Text style={styles.tableCell}>{formatTimestamp(item.timestamp)}</Text>
               <Text style={styles.tableCell}>{item.userName}</Text>
-              <Text style={styles.tableCell}>{item.successCount}次</Text>
+              <Text style={styles.tableCell}>{item.completionTime}</Text>
               <Text style={styles.tableCell}>
                 {item.score}
                 <TouchableOpacity
                   style={styles.deleteButton}
                   onPress={() => {
                     Alert.alert(
-                      "刪除記錄",
-                      "確定要刪除這條記錄嗎？",
+                      "删除记录",
+                      "确定要删除这条记录吗？",
                       [
                         {
                           text: "取消",
                           style: "cancel"
                         },
                         {
-                          text: "確定",
+                          text: "确定",
                           onPress: () => deleteRecord(item.timestamp)
                         }
                       ]
                     );
                   }}
                 >
-                  <Text style={styles.deleteButtonText}>🗑️</Text>
+                  <Text style={styles.deleteButtonText}></Text>
                 </TouchableOpacity>
               </Text>
             </TouchableOpacity>
@@ -209,6 +209,6 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   deleteButtonText: {
-    color: '#ff4500',
+    color: '#ff0000',
   },
 });

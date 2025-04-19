@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import TestDataGenerator from './TestDataGenerator';
 import { TestProvider } from './contexts/TestContext';
 
-// 使用 require 直接導入原生模組
+// 使用 require 直接导入原生模块
 const NeuroSkyModule = require('react-native').NativeModules.NeuroSkyModule;
 // const ESP32Module = require('react-native').NativeModules.ESP32Module;
 
@@ -16,17 +16,17 @@ if (!NeuroSkyModule) {
 //     console.error('ESP32Module is not available');
 // }
 
-// 創建事件發射器
+// 创建事件发射器
 const neuroSkyEmitter = new NativeEventEmitter(NeuroSkyModule);
 // const esp32Emitter = new NativeEventEmitter(ESP32Module);
 
 const Home = () => {
     const navigation = useNavigation();
-    const [thinkGearStatus, setThinkGearStatus] = useState('未連接');
-    // const [esp32Status, setEsp32Status] = useState('未連接');
+    const [thinkGearStatus, setThinkGearStatus] = useState('未连接');
+    // const [esp32Status, setEsp32Status] = useState('未连接');
     const [attention, setAttention] = useState(0);
     // const [esp32Data, setEsp32Data] = useState(null);
-    const [userName, setUserName] = useState('受試者');
+    const [userName, setUserName] = useState('受试者');
     const [isTestMode, setIsTestMode] = useState(false);
     const [testGenerator, setTestGenerator] = useState(null);
 
@@ -34,25 +34,25 @@ const Home = () => {
         const subscriptions = [];
 
         if (NeuroSkyModule) {
-            // ThinkGear 事件監聽
+            // ThinkGear 事件监听
             subscriptions.push(
                 neuroSkyEmitter.addListener('onStateChange', (event) => {
-                    console.log('ThinkGear 狀態變更:', event.state);
+                    console.log('ThinkGear 状态变更:', event.state);
                     switch (event.state) {
                         case 'CONNECTED':
-                            setThinkGearStatus('已連接');
+                            setThinkGearStatus('已连接');
                             break;
                         case 'DISCONNECTED':
-                            setThinkGearStatus('未連接');
+                            setThinkGearStatus('未连接');
                             break;
                         case 'CONNECTING':
-                            setThinkGearStatus('連線中...');
+                            setThinkGearStatus('连接中...');
                             break;
                         case 'POOR_SIGNAL':
-                            setThinkGearStatus('訊號不良');
+                            setThinkGearStatus('信号不良');
                             break;
                         case 'NO_PERMISSION':
-                            setThinkGearStatus('需要藍牙權限');
+                            setThinkGearStatus('需要蓝牙权限');
                             break;
                     }
                 })
@@ -68,13 +68,13 @@ const Home = () => {
 
             subscriptions.push(
                 neuroSkyEmitter.addListener('onError', (event) => {
-                    console.log('ThinkGear 錯誤:', event.error);
+                    console.log('ThinkGear 错误:', event.error);
                 })
             );
         }
 
         // if (ESP32Module) {
-        //     // ESP32 事件監聽
+        //     // ESP32 事件监听
         //     subscriptions.push(
         //         esp32Emitter.addListener('onESP32Data', (event) => {
         //             try {
@@ -83,30 +83,30 @@ const Home = () => {
         //                 
         //                 if (data.cast === true || data.castbig === true) {
         //                     setEsp32Data(data);
-        //                     console.log('Home - 更新 ESP32 狀態:', data);
+        //                     console.log('Home - 更新 ESP32 状态:', data);
         //                     
-        //                     // 轉發事件到 Evaluate
+        //                     // 转发事件到 Evaluate
         //                     DeviceEventEmitter.emit('onESP32Data', event);
-        //                     console.log('Home - 轉發事件到 Evaluate');
+        //                     console.log('Home - 转发事件到 Evaluate');
         //                 }
         //             } catch (error) {
-        //                 console.log('Home - 解析 ESP32 數據錯誤:', error);
+        //                 console.log('Home - 解析 ESP32 数据错误:', error);
         //             }
         //         })
         //     );
 
         //     subscriptions.push(
         //         esp32Emitter.addListener('onESP32Connected', (event) => {
-        //             console.log('ESP32 狀態變更:', event.status);
+        //             console.log('ESP32 状态变更:', event.status);
         //             switch (event.status) {
         //                 case 'CONNECTED':
-        //                     setEsp32Status('已連接');
+        //                     setEsp32Status('已连接');
         //                     break;
         //                 case 'DISCONNECTED':
-        //                     setEsp32Status('未連接');
+        //                     setEsp32Status('未连接');
         //                     break;
         //                 case 'CONNECTING':
-        //                     setEsp32Status('連線中...');
+        //                     setEsp32Status('连接中...');
         //                     break;
         //             }
         //         })
@@ -114,31 +114,31 @@ const Home = () => {
 
         //     subscriptions.push(
         //         esp32Emitter.addListener('onESP32Error', (event) => {
-        //             console.log('ESP32 錯誤:', event.error);
-        //             setEsp32Status('連接錯誤');
+        //             console.log('ESP32 错误:', event.error);
+        //             setEsp32Status('连接错误');
         //         })
         //     );
         // }
 
-        // 開始連接設備
+        // 开始连接设备
         const connectDevices = async () => {
             try {
                 if (NeuroSkyModule) {
-                    console.log('開始連接 ThinkGear...');
+                    console.log('开始连接 ThinkGear...');
                     await NeuroSkyModule.connect();
                 }
                 // if (ESP32Module) {
-                //     console.log('開始連接 ESP32...');
+                //     console.log('开始连接 ESP32...');
                 //     await ESP32Module.connect();
                 // }
             } catch (error) {
-                console.error('連接設備錯誤:', error);
+                console.error('连接设备错误:', error);
             }
         };
 
         connectDevices();
 
-        // 清理訂閱
+        // 清理订阅
         return () => {
             subscriptions.forEach(subscription => subscription.remove());
             if (NeuroSkyModule) NeuroSkyModule.disconnect();
@@ -146,17 +146,17 @@ const Home = () => {
         };
     }, []);
 
-    // 切換測試模式
+    // 切换测试模式
     const toggleTestMode = () => {
         if (isTestMode) {
-            // 關閉測試模式
+            // 关闭测试模式
             if (testGenerator) {
                 testGenerator.stopSimulation();
                 setTestGenerator(null);
             }
         } else {
             try {
-                // 開啟測試模式
+                // 开启测试模式
                 const generator = new TestDataGenerator();
                 if (generator) {
                     setupTestGenerator(generator);
@@ -164,31 +164,31 @@ const Home = () => {
                     setTestGenerator(generator);
                 }
             } catch (error) {
-                console.error('創建測試生成器錯誤:', error);
+                console.error('创建测试生成器错误:', error);
             }
         }
         setIsTestMode(!isTestMode);
     };
 
-    // 設置測試數據生成器
+    // 设置测试数据生成器
     const setupTestGenerator = (generator) => {
         generator.setListener('onStateChange', (event) => {
-            console.log('ThinkGear 狀態變更:', event.state);
+            console.log('ThinkGear 状态变更:', event.state);
             switch (event.state) {
                 case 'CONNECTED':
-                    setThinkGearStatus('已連接');
+                    setThinkGearStatus('已连接');
                     break;
                 case 'DISCONNECTED':
-                    setThinkGearStatus('未連接');
+                    setThinkGearStatus('未连接');
                     break;
                 case 'CONNECTING':
-                    setThinkGearStatus('連線中...');
+                    setThinkGearStatus('连接中...');
                     break;
                 case 'POOR_SIGNAL':
-                    setThinkGearStatus('訊號不良');
+                    setThinkGearStatus('信号不良');
                     break;
                 case 'NO_PERMISSION':
-                    setThinkGearStatus('需要藍牙權限');
+                    setThinkGearStatus('需要蓝牙权限');
                     break;
             }
         });
@@ -200,16 +200,16 @@ const Home = () => {
         });
 
         // generator.setListener('onESP32Connected', (event) => {
-        //     console.log('ESP32 狀態變更:', event.status);
+        //     console.log('ESP32 状态变更:', event.status);
         //     switch (event.status) {
         //         case 'CONNECTED':
-        //             setEsp32Status('已連接');
+        //             setEsp32Status('已连接');
         //             break;
         //         case 'DISCONNECTED':
-        //             setEsp32Status('未連接');
+        //             setEsp32Status('未连接');
         //             break;
         //         case 'CONNECTING':
-        //             setEsp32Status('連線中...');
+        //             setEsp32Status('连接中...');
         //             break;
         //     }
         // });
@@ -219,15 +219,15 @@ const Home = () => {
         //         const data = JSON.parse(event.data);
         //         if (data.cast === true || data.castbig === true) {
         //             setEsp32Data(data);
-        //             console.log('收到 ESP32 投擲數據:', data);
+        //             console.log('收到 ESP32 投投数据:', data);
         //         }
         //     } catch (error) {
-        //         console.error('解析 ESP32 數據錯誤:', error);
+        //         console.error('解析 ESP32 数据错误:', error);
         //     }
         // });
     };
 
-    // 點擊開始按鈕執行的函數
+    // 点击开始按钮执行的函数
     const handleStart = () => {
         navigation.navigate('Evaluate', { 
             userName,
@@ -237,23 +237,23 @@ const Home = () => {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case '已連接':
-                return '#4CAF50'; // 綠色
-            case '連線中...':
-                return '#FFA500'; // 橘色
-            case '未連接':
-                return '#FF0000'; // 紅色
-            case '訊號不良':
-                return '#FF9800'; // 深橘色
-            case '需要藍牙權限':
-                return '#FF9800'; // 深橘色
+            case '已连接':
+                return '#4CAF50'; // 绿色
+            case '连接中...':
+                return '#FFA500'; // 橙色
+            case '未连接':
+                return '#FF0000'; // 红色
+            case '信号不良':
+                return '#FF9800'; // 深橙色
+            case '需要蓝牙权限':
+                return '#FF9800'; // 深橙色
             default:
                 return '#fff';
         }
     };
 
-    // 只檢查 ThinkGear 是否連接
-    const canStart = thinkGearStatus === '已連接';
+    // 只检查 ThinkGear 是否连接
+    const canStart = thinkGearStatus === '已连接';
 
     return (
         <TestProvider testGenerator={testGenerator}>
@@ -267,13 +267,13 @@ const Home = () => {
                             onPress={toggleTestMode}
                         >
                             <Text style={styles.testModeButtonText}>
-                                {isTestMode ? '關閉測試模式' : '開啟測試模式'}
+                                {isTestMode ? '关闭测试模式' : '开启测试模式'}
                             </Text>
                         </TouchableOpacity>
                     </View> */}
 
                     <View style={styles.titleContainer}>
-                        <Text style={styles.title}>益智积木脑里评测</Text>
+                        <Text style={styles.title}>益智积木脑力评测</Text>
                         <Image
                             source={require('../assets/img/main.png')}
                             style={styles.mainImage}
@@ -283,17 +283,17 @@ const Home = () => {
 
                     <View style={styles.statusContainer}>
                         <View style={styles.deviceStatus}>
-                            <Text style={styles.deviceLabel}>腦波儀狀態:</Text>
+                            <Text style={styles.deviceLabel}>脑波仪状态:</Text>
                             <Text style={[styles.statusText, { color: getStatusColor(thinkGearStatus) }]}>
                                 {thinkGearStatus}
                             </Text>
-                            {thinkGearStatus === '已連接' && (
-                                <Text style={styles.attentionText}>專注度: {attention}%</Text>
+                            {thinkGearStatus === '已连接' && (
+                                <Text style={styles.attentionText}>专注度: {attention}%</Text>
                             )}
                         </View>
 
                         {/* <View style={styles.deviceStatus}>
-                            <Text style={styles.deviceLabel}>投壺狀態:</Text>
+                            <Text style={styles.deviceLabel}>投壶状态:</Text>
                             <Text style={[styles.statusText, { color: getStatusColor(esp32Status) }]}>
                                 {esp32Status}
                             </Text>
@@ -306,7 +306,7 @@ const Home = () => {
                             style={styles.input}
                             value={userName}
                             onChangeText={setUserName}
-                            placeholder="請輸入姓名"
+                            placeholder="请输入姓名"
                             placeholderTextColor="#999"
                         />
                     </View>
@@ -322,7 +322,7 @@ const Home = () => {
                                 style={styles.startButtonImage}
                                 resizeMode="stretch"
                             >
-                                <Text style={styles.startButtonText}>開始</Text>
+                                <Text style={styles.startButtonText}>开始</Text>
                             </ImageBackground>
                         </TouchableOpacity>
                     </View>

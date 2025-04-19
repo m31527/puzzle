@@ -555,7 +555,7 @@ const Report = () => {
               
               try {
                 // 使用 handleDownload 函數生成 PDF
-                const fileName = `腦電波報告_${userName}_${new Date().getTime()}`;
+                const fileName = `脑電波報告_${userName}_${new Date().getTime()}`;
                 await handleDownload(htmlContent, fileName);
               } catch (error) {
                 console.log('RNHTMLtoPDF 不可用，使用備用方案...', error);

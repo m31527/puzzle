@@ -12,37 +12,37 @@ const PDFView = ({ route }) => {
   useEffect(() => {
     const openPDF = async () => {
       try {
-        console.log('📄 檢查 PDF 檔案:', pdfPath);
+        console.log('📄 检查 PDF 文件:', pdfPath);
         
-        // 確認檔案是否存在
+        // 确认文件是否存在
         const exists = await RNFS.exists(pdfPath);
         if (!exists) {
-          console.error('❌ PDF 檔案不存在');
-          Alert.alert('錯誤', '找不到 PDF 檔案');
+          console.error('❌ PDF 文件不存在');
+          Alert.alert('错误', '找不到 PDF 文件');
           navigation.goBack();
           return;
         }
 
-        console.log('✅ 檔案存在，準備開啟...');
+        console.log('✅ 文件存在，准备打开...');
         
-        // 嘗試開啟檔案
+        // 尝试打开文件
         await FileViewer.open(pdfPath, {
           showOpenWithDialog: true,
           showAppsSuggestions: true
         });
-        console.log('✅ PDF 開啟成功');
+        console.log('✅ PDF 打开成功');
         
-        // 成功開啟後返回
+        // 成功打开后返回
         navigation.goBack();
       } catch (error) {
-        console.error('無法打開 PDF:', error);
-        Alert.alert('錯誤', '無法打開報告文件。');
+        console.error('打开 PDF 时出错:', error);
+        Alert.alert('错误', '无法打开 PDF 文件。');
         navigation.goBack();
       }
     };
 
     openPDF();
-  }, [pdfPath]);
+  }, [pdfPath, navigation]);
 
   return null;
 };

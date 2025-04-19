@@ -23,34 +23,34 @@ import { GAME_CONFIG } from './config/gameConfig';
 import PuzzleTest from './PuzzleTest';
 import TestDataGenerator from './TestDataGenerator';
 
-// 初始狀態
+// 初始状态
 const initialState = {
-  attentionData: [],  // 確保這裡初始化為空陣列
+  attentionData: [],  // 确保这里初始化为空数组
   meditationData: [],
   signalData: [],
   throwCount: 0,
   successCount: 0,
   throwHistory: [],
-  isBigThrow: false,  // 新增用於追踪是否為大投擲
-  enduranceData: {},  // 保留空對象以保持向後兼容性
-  stabilityData: {},  // 改為空對象，因為我們使用新的計算方式
+  isBigThrow: false,  // 新增用于追踪是否为大投掷
+  enduranceData: {},  // 保留空对象以保持向后兼容性
+  stabilityData: {},  // 改为空对象，因为我们使用新的计算方式
   attentionHistory: {},
   rawBrainwaveData: {
     attention: [],
     meditation: [],
     timestamps: []
   },
-  thetaValues: [],  // 新增 theta 值的追蹤
-  deltaValues: [],  // 新增 delta 值的追蹤
-  lowAlphaValues: [],  // 新增 lowAlpha 值的追蹤
-  highAlphaValues: [],  // 新增 highAlpha 值的追蹤
-  lowBetaValues: [],  // 新增 lowBeta 值的追蹤
-  highBetaValues: [],  // 新增 highBeta 值的追蹤
-  lowGammaValues: [],  // 新增 lowGamma 值的追蹤
-  midGammaValues: []  // 新增 midGamma 值的追蹤
+  thetaValues: [],  // 新增 theta 值的追踪
+  deltaValues: [],  // 新增 delta 值的追踪
+  lowAlphaValues: [],  // 新增 lowAlpha 值的追踪
+  highAlphaValues: [],  // 新增 highAlpha 值的追踪
+  lowBetaValues: [],  // 新增 lowBeta 值的追踪
+  highBetaValues: [],  // 新增 highBeta 值的追踪
+  lowGammaValues: [],  // 新增 lowGamma 值的追踪
+  midGammaValues: []  // 新增 midGamma 值的追踪
 };
 
-// 定義 reducer action types
+// 定义 reducer action types
 const ACTION_TYPES = {
   UPDATE_ATTENTION: 'UPDATE_ATTENTION',
   UPDATE_MEDITATION: 'UPDATE_MEDITATION',
@@ -69,13 +69,13 @@ const ACTION_TYPES = {
   RESET_GAME: 'RESET_GAME'
 };
 
-// Reducer 函數
+// Reducer 函数
 function gameDataReducer(state, action) {
   switch (action.type) {
     case ACTION_TYPES.UPDATE_ATTENTION: {
       const validValue = Number(action.payload);
       if (isNaN(validValue)) {
-        //console.log('無效的專注度值:', action.payload);
+        //console.log('无效的专注度值:', action.payload);
         return state;
       }
 
@@ -225,10 +225,10 @@ function gameDataReducer(state, action) {
   }
 }
 
-// 投擲結果組件
+// 投掷结果组件
 const ThrowResults = React.memo(({ gameState }) => {
   const recentThrows = 5;
-  const throwHistory = (gameState.throwHistory || []).slice().reverse();  // 反轉陣列以顯示最新的結果在左邊
+  const throwHistory = (gameState.throwHistory || []).slice().reverse();  // 反转数组以显示最新的结果在左边
   //const accuracy = gameState.throwCount > 0 ? Math.round((gameState.successCount / gameState.throwCount) * 100) : 0;
 
   // console.log('ThrowResults 渲染:', {
@@ -258,7 +258,7 @@ const ThrowResults = React.memo(({ gameState }) => {
   return (
     <View style={styles.accuracyContainer}>
       <Text style={styles.accuracyText}>
-        準確率: {accuracy}% ({gameState.successCount}/{GAME_CONFIG.MAX_THROWS})
+        准确率: {accuracy}% ({gameState.successCount}/{GAME_CONFIG.MAX_THROWS})
       </Text>
       <View style={styles.accuracyGrid}>
         {results}
@@ -303,7 +303,7 @@ const Evaluate = forwardRef((props, ref) => {
   };
 
   const renderChart = useCallback(() => {
-    // 確保數據有效
+    // 确保数据有效
     const validAttentionData = Array.isArray(gameState.attentionData) 
       ? gameState.attentionData.map(v => Number(v) || 0)
       : [0];
@@ -336,7 +336,7 @@ const Evaluate = forwardRef((props, ref) => {
           strokeWidth: 2,
         },
       ],
-      legend: ['專注度', '放鬆度', '信號強度']
+      legend: ['专注度', '放松度', '信号强度']
     };
 
     return (
@@ -365,7 +365,7 @@ const Evaluate = forwardRef((props, ref) => {
     );
   }, [gameState.attentionData, gameState.meditationData, gameState.signalData]);
 
-  // 信號處理函數
+  // 信号处理函数
   const handleSignalChange = useCallback((signal) => {
     if (!signal || !signal.signal || typeof signal.value !== 'number') {
       return;
@@ -373,7 +373,7 @@ const Evaluate = forwardRef((props, ref) => {
 
     const currentTime = Date.now();
     
-    // 使用防抖來減少更新頻率
+    // 使用防抖来减少更新频率
     if (updateTimeoutRef.current) {
       clearTimeout(updateTimeoutRef.current);
     }
@@ -393,10 +393,10 @@ const Evaluate = forwardRef((props, ref) => {
       //   value: signal.value,
       //   timestamp: currentTime
       // });
-    }, 100);  // 100ms 的防抖延遲
+    }, 100);  // 100ms 的防抖延迟
   }, []);
 
-  // 處理 ESP32 數據
+  // 处理 ESP32 数据
   const handleESP32Data = useCallback((event) => {
     try {
       const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
@@ -414,52 +414,52 @@ const Evaluate = forwardRef((props, ref) => {
         });
       }
     } catch (error) {
-      console.error('Evaluate - 處理 ESP32 數據錯誤:', error);
+      console.error('Evaluate - 处理 ESP32 数据错误:', error);
     }
   }, [gameState.attentionData, dispatch]);
 
-  // 處理錯誤
+  // 处理错误
   const handleError = useCallback((error) => {
-    // 將錯誤轉換為警告
-    console.warn('ThinkGear 警告:', typeof error === 'object' ? error.error || '連接中斷' : error);
+    // 将错误转换为警告
+    console.warn('ThinkGear 警告:', typeof error === 'object' ? error.error || '连接中断' : error);
     
-    // 不要觸發斷開連接的處理
+    // 不要触发断开连接的处理
     if (!testGenerator) {
       setThinkGearConnected(false);
     }
   }, [testGenerator]);
 
-  // 處理斷開連接
+  // 处理断开连接
   const handleDisconnect = useCallback(() => {
-    console.warn('設備連接中斷');
+    console.warn('设备连接中断');
     if (!testGenerator) {
       setThinkGearConnected(false);
       
-      // 如果重試次數未超過上限，嘗試重新連接
+      // 如果重试次数未超过上限，尝试重新连接
       if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
         setReconnectAttempts(prev => prev + 1);
-        console.warn(`嘗試重新連接 (${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
+        console.warn(`尝试重新连接 (${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
         
-        // 延遲 2 秒後重試
+        // 延迟 2 秒后重试
         setTimeout(() => {
           NativeModules.NeuroSkyModule.connect()
             .catch(err => {
-              console.warn('重新連接失敗:', err);
+              console.warn('重新连接失败:', err);
             });
         }, 2000);
       }
     }
   }, [reconnectAttempts, testGenerator]);
 
-  // 設置事件監聽器
+  // 设置事件监听器
   const subscriptionsRef = useRef([]);
   useEffect(() => {
     if (isFocused) {
-      console.log('Evaluate 頁面獲得焦點，開始數據處理');
+      console.log('Evaluate 页面获得焦点，开始数据处理');
       setupEventListeners();
     } else {
-      console.log('Evaluate 頁面失去焦點，停止數據處理');
-      // 清理事件監聽器
+      console.log('Evaluate 页面失去焦点，停止数据处理');
+      // 清理事件监听器
       if (subscriptionsRef.current) {
         subscriptionsRef.current.forEach(subscription => subscription.remove());
         subscriptionsRef.current = [];
@@ -467,17 +467,17 @@ const Evaluate = forwardRef((props, ref) => {
     }
   }, [isFocused, setupEventListeners]);
 
-  // 設置事件監聽器
+  // 设置事件监听器
   const setupEventListeners = useCallback(() => {
     try {
       if (Platform.OS === 'android') {
         const neuroSkyEmitter = new NativeEventEmitter(NativeModules.NeuroSkyModule);
         const esp32Emitter = new NativeEventEmitter(NativeModules.ESP32Module);
 
-        // 添加事件監聽器並保存到 ref 中
+        // 添加事件监听器并保存到 ref 中
         subscriptionsRef.current = [
           neuroSkyEmitter.addListener('onEegPower', (eegPower) => {
-            // 更新所有腦電波頻段數據
+            // 更新所有脑电波频段数据
             if (typeof eegPower.theta === 'number') {
               dispatch({
                 type: ACTION_TYPES.UPDATE_THETA,
@@ -485,7 +485,7 @@ const Evaluate = forwardRef((props, ref) => {
               });
             }
             
-            // 更新其他頻段數據
+            // 更新其他频段数据
             if (typeof eegPower.delta === 'number') {
               dispatch({
                 type: ACTION_TYPES.UPDATE_DELTA,
@@ -555,100 +555,98 @@ const Evaluate = forwardRef((props, ref) => {
             }
           }),
           neuroSkyEmitter.addListener('onStateChange', (state) => {
-            console.log('狀態變化:', state);
+            console.log('状态变化:', state);
           }),
           esp32Emitter.addListener('onESP32Data', handleESP32Data)
         ];
 
-        console.log('成功設置所有事件監聽器');
+        console.log('成功设置所有事件监听器');
       }
     } catch (error) {
-      console.error('設置事件監聽器時發生錯誤:', error);
+      console.error('设置事件监听器时发生错误:', error);
     }
   }, [dispatch, handleESP32Data]);
 
-  // 計算維持值
+  // 计算维持值
   const calculateEndurance = useCallback(() => {
     const attentionData = gameState.attentionData || [];
     const meditationData = gameState.meditationData || [];
 
-    // 確保兩個數據都存在且長度一致
+    // 确保两个数据都存在且长度一致
     if (attentionData.length === 0 || meditationData.length === 0) return 0;
 
-    // 計算 ATTENTION 和 MEDITATION 的平均值
+    // 计算 ATTENTION 和 MEDITATION 的平均值
     const meanAttention = attentionData.reduce((sum, value) => sum + value, 0) / attentionData.length;
     const meanMeditation = meditationData.reduce((sum, value) => sum + value, 0) / meditationData.length;
 
-    // 計算 ATTENTION 和 MEDITATION 的標準差
+    // 计算 ATTENTION 和 MEDITATION 的标准差
     const varianceAttention = attentionData.reduce((sum, value) => sum + Math.pow(value - meanAttention, 2), 0) / attentionData.length;
     const varianceMeditation = meditationData.reduce((sum, value) => sum + Math.pow(value - meanMeditation, 2), 0) / meditationData.length;
 
     const stdDevAttention = Math.sqrt(varianceAttention);
     const stdDevMeditation = Math.sqrt(varianceMeditation);
 
-    // 綜合 ATTENTION 和 MEDITATION 的標準差
+    // 综合 ATTENTION 和 MEDITATION 的标准差
     const combinedStdDev = (stdDevAttention + stdDevMeditation) / 2;
 
-    // 穩定度轉換：標準差越小，維持值越高
+    // 稳定度转换：标准差越小，维持值越高
     const enduranceScore = 100 - Math.min(100, combinedStdDev);
 
-    //console.log(`維持度計算: ATT均值=${meanAttention.toFixed(2)}, MED均值=${meanMeditation.toFixed(2)}, ATT標準差=${stdDevAttention.toFixed(2)}, MED標準差=${stdDevMeditation.toFixed(2)}, 穩定度=${enduranceScore.toFixed(2)}%`);
+    //console.log(`维持度计算: ATT均值=${meanAttention.toFixed(2)}, MED均值=${meanMeditation.toFixed(2)}, ATT标准差=${stdDevAttention.toFixed(2)}, MED标准差=${stdDevMeditation.toFixed(2)}, 稳定度=${enduranceScore.toFixed(2)}%`);
     
     return Math.round(enduranceScore);
   }, [gameState.attentionData, gameState.meditationData]);
 
-  // 計算穩定度
+  // 计算稳定度
   const calculateStability = useCallback(() => {
     const attentionData = gameState.attentionData || [];
     const meditationData = gameState.meditationData || [];
 
-    // 如果沒有數據，返回預設的中等穩定度 50
+    // 如果没有数据，返回预设的中等稳定度 50
     if (attentionData.length === 0 || meditationData.length === 0) return 50;
 
-    // 計算低於40的次數
+    // 计算低于40的次数
     const lowAttentionCount = attentionData.filter(value => value < 40).length;
     const lowMeditationCount = meditationData.filter(value => value < 40).length;
 
-    // 計算總數據量
+    // 计算总数据量
     const totalAttentionCount = attentionData.length;
     const totalMeditationCount = meditationData.length;
     const totalDataPoints = totalAttentionCount + totalMeditationCount;
 
-    // 計算 ATTENTION 和 MEDITATION < 40 的比例
+    // 计算 ATTENTION 和 MEDITATION < 40 的比例
     const lowAttentionRatio = lowAttentionCount / totalAttentionCount;
     const lowMeditationRatio = lowMeditationCount / totalMeditationCount;
 
-    // 設定 ATTENTION 與 MEDITATION 的權重
-    const attentionWeight = 0.6;  // 專注佔 60%
-    const meditationWeight = 0.4; // 冥想佔 40%
+    // 设定 ATTENTION 与 MEDITATION 的权重
+    const attentionWeight = 0.6;  // 专注占 60%
+    const meditationWeight = 0.4; // 冥想占 40%
 
-    // 計算加權低於 40 的比例
+    // 计算加权低于 40 的比例
     const weightedLowRatio = (lowAttentionRatio * attentionWeight) + (lowMeditationRatio * meditationWeight);
-
-    // 計算最終穩定度分數 (確保回傳值在 1-100 之間)
     let stabilityScore = (1 - weightedLowRatio) * 100;
     stabilityScore = Math.max(1, Math.min(100, stabilityScore));
 
-    // console.log(`穩定度計算: 
-    //   專注低於40次數=${lowAttentionCount}/${totalAttentionCount} (${(lowAttentionRatio * 100).toFixed(1)}%), 
-    //   冥想低於40次數=${lowMeditationCount}/${totalMeditationCount} (${(lowMeditationRatio * 100).toFixed(1)}%), 
-    //   加權比例=${(weightedLowRatio * 100).toFixed(1)}%, 
-    //   最終分數=${Math.round(stabilityScore)}%`);
+    // console.log(`稳定度计算: 
+    //   专注低于40次数=${lowAttentionCount}/${totalAttentionCount} (${(lowAttentionRatio * 100).toFixed(1)}%), 
+    //   冥想低于40次数=${lowMeditationCount}/${totalMeditationCount} (${(lowMeditationRatio * 100).toFixed(1)}%), 
+    //   加权比例=${(weightedLowRatio * 100).toFixed(1)}%, 
+    //   最终分数=${Math.round(stabilityScore)}%`);
 
     return Math.round(stabilityScore);
   }, [gameState.attentionData, gameState.meditationData]);
 
-  // 重置遊戲數據
+  // 重置游戏数据
   const resetData = useCallback(() => {
     dispatch({ type: ACTION_TYPES.RESET_GAME });
   }, [dispatch]);
 
   let gameData = {
   };
-  // 處理結束遊戲
+  // 处理结束游戏
   const handleEndGame = useCallback(async () => {
     try {
-      //console.log('準備結束遊戲，當前遊戲狀態:', gameState);
+      //console.log('准备结束游戏，当前游戏状态:', gameState);
       
       const accuracy = calculateAccuracy();
       // const brainPower = calculateBrainPower();
@@ -656,10 +654,10 @@ const Evaluate = forwardRef((props, ref) => {
       // const endurance = calculateEndurance();
       // const stability = calculateStability();
       
-      // 確保分數不會達到100，如果是100分則隨機給97-99分
+      // 确保分数不会达到100，如果是100分则随机给97-99分
       const capScore = (score) => {
         if (score >= 100) {
-          return 97 + Math.floor(Math.random() * 3); // 隨機生成 97, 98, 或 99
+          return 97 + Math.floor(Math.random() * 3); // 随机生成 97, 98, 或 99
         }
         return score;
       };
@@ -673,16 +671,16 @@ const Evaluate = forwardRef((props, ref) => {
       const score = calculateScore();
       const percentilePosition = calculatePercentilePosition();
             
-      // 儲存遊戲數據
+      // 存储游戏数据
       await Database.saveGameRecord(gameData);
       
-      // 清理所有事件監聽器
+      // 清理所有事件监听器
       if (subscriptionsRef.current) {
         subscriptionsRef.current.forEach(subscription => subscription.remove());
         subscriptionsRef.current = [];
       }
       
-      // 確保數據有效
+      // 确保数据有效
       const validAttentionData = Array.isArray(gameState.attentionData) 
         ? gameState.attentionData.map(v => Number(v) || 0)
         : [0];
@@ -706,19 +704,19 @@ const Evaluate = forwardRef((props, ref) => {
         completionTime: timeCounter
       };
 
-      console.log('遊戲結束，完整數據:', gameData);
+      console.log('游戏结束，完整数据:', gameData);
 
-      // 導航到報告頁面，使用正確的數據格式
+      // 导航到报告页面，使用正确的数据格式
       navigation.navigate('Report', {
         gameData: gameData
       });
       
-      // 重置遊戲狀態
+      // 重置游戏状态
       resetData();
       
     } catch (error) {
-      console.error('結束遊戲時發生錯誤:', error);
-      Alert.alert('錯誤', '儲存遊戲記錄時發生錯誤');
+      console.error('结束游戏时发生错误:', error);
+      Alert.alert('错误', '存储游戏记录时发生错误');
     }
   }, [
     gameState,
@@ -737,7 +735,7 @@ const Evaluate = forwardRef((props, ref) => {
     resetData
   ]);
 
-  // 處理投擲結果
+  // 处理投掷结果
   const handleThrow = useCallback(() => {
     const isSuccess = Math.random() < 0.5;  // 50% 成功率
     
@@ -749,16 +747,16 @@ const Evaluate = forwardRef((props, ref) => {
       }
     });
 
-    console.log('投擲結果:', isSuccess ? '成功' : '失敗');  // 添加日誌
+    console.log('投掷结果:', isSuccess ? '成功' : '失败');  // 添加日志
   }, []);
 
-  // 計算準確率
+  // 计算准确率
   const calculateAccuracy = useCallback(() => {
     if (gameState.throwCount === 0) return 0;
     return Math.round((gameState.successCount / GAME_CONFIG.MAX_THROWS) * 100);
   }, [gameState.throwCount, gameState.successCount]);
 
-  // 計算平均專注度
+  // 计算平均专注度
   const calculateAverageAttention = useCallback(() => {
     const values = gameState.attentionData;
     if (values.length === 0) return 0;
@@ -766,7 +764,7 @@ const Evaluate = forwardRef((props, ref) => {
     return Math.round(sum / values.length);
   }, [gameState.attentionData]);
 
-  // 計算平均冥想度
+  // 计算平均冥想度
   const calculateAverageMeditation = useCallback(() => {
     const values = gameState.meditationData;
     if (values.length === 0) return 0;
@@ -774,21 +772,21 @@ const Evaluate = forwardRef((props, ref) => {
     return Math.round(sum / values.length);
   }, [gameState.meditationData]);
 
-  // 計算腦力值
+  // 计算脑力值
   const calculateBrainPower = useCallback(() => {
     const avgAttention = calculateAverageAttention();
     const accuracy = calculateAccuracy();
     return Math.round((avgAttention + accuracy) / 2);
   }, [calculateAverageAttention, calculateAccuracy]);
 
-  // 計算超能力值
+  // 计算超能力值
   const computeSuperAbility = useCallback((theta) => {
-    if (theta <= 4.3) return 0;  // 防止無效數據
+    if (theta <= 4.3) return 0;  // 防止无效数据
     
-    // 將 theta 值標準化到更合理的範圍
-    const normalizedTheta = theta / 1000; // 將大數值縮小到更合理的範圍
+    // 将 theta 值标准化到更合理的范围
+    const normalizedTheta = theta / 1000; // 将大数值缩小到更合理的范围
     
-    // 使用更合適的計算公式
+    // 使用更合适的计算公式
     const score = Math.min(100, Math.max(0, 
       50 + (Math.log(normalizedTheta) / Math.log(200)) * 50
     ));
@@ -802,7 +800,7 @@ const Evaluate = forwardRef((props, ref) => {
     return score;
   }, []);
 
-  // 標準化腦電波頻段數據
+  // 标准化脑电波频段数据
   const normalizeEegValues = useCallback((values) => {
     if (!values || values.length === 0) return [];
     
@@ -813,22 +811,22 @@ const Evaluate = forwardRef((props, ref) => {
     // 避免除以零
     if (max === min) return values.map(() => 0.5);
     
-    // 標準化到 0-1 範圍
+    // 标准化到 0-1 范围
     return values.map(value => (value - min) / (max - min));
   }, []);
 
-  // 計算協調力 (Coordination Ability)
+  // 计算协调力 (Coordination Ability)
   const calculateCoordinationAbility = useCallback(() => {
     if (!gameState.thetaValues || gameState.thetaValues.length === 0) return 50;
     
-    // 獲取各腦電波頻段數據
+    // 获取各脑电波频段数据
     const eegPower = {};
     
     // 使用 reducer 中的 thetaValues
     eegPower.theta = gameState.thetaValues || [];
     
-    // 從 onEegPower 事件獲取的其他頻段數據
-    // 如果沒有這些數據，使用空數組
+    // 从 onEegPower 事件获取的其他频段数据
+    // 如果没有这些数据，使用空数组
     eegPower.delta = gameState.deltaValues || [];
     eegPower.lowAlpha = gameState.lowAlphaValues || [];
     eegPower.highAlpha = gameState.highAlphaValues || [];
@@ -837,50 +835,50 @@ const Evaluate = forwardRef((props, ref) => {
     eegPower.lowGamma = gameState.lowGammaValues || [];
     eegPower.midGamma = gameState.midGammaValues || [];
     
-    // 標準化各頻段數據
+    // 标准化各频段数据
     const normalizedValues = [];
     for (const band in eegPower) {
       if (eegPower[band] && eegPower[band].length > 0) {
-        // 計算平均值
+        // 计算平均值
         const avg = eegPower[band].reduce((sum, val) => sum + val, 0) / eegPower[band].length;
         normalizedValues.push(avg);
       }
     }
     
-    // 如果沒有足夠的數據，返回默認值
+    // 如果没有足够的数据，返回默认值
     if (normalizedValues.length < 2) return 50;
     
-    // 標準化數據
+    // 标准化数据
     const normalized = normalizeEegValues(normalizedValues);
     
-    // 計算標準差
+    // 计算标准差
     const mean = normalized.reduce((sum, val) => sum + val, 0) / normalized.length;
     const variance = normalized.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / normalized.length;
     const stdDev = Math.sqrt(variance);
     
-    // 計算協調力: 100 - (標準差 × 0.5)
+    // 计算协调力: 100 - (标准差 × 0.5)
     const coordinationScore = 100 - (stdDev * 50);
     
-    // 確保分數在 0-100 範圍內
+    // 确保分数在 0-100 范围内
     return Math.max(0, Math.min(100, Math.round(coordinationScore)));
   }, [gameState.thetaValues, gameState.deltaValues, gameState.lowAlphaValues, gameState.highAlphaValues, 
       gameState.lowBetaValues, gameState.highBetaValues, gameState.lowGammaValues, gameState.midGammaValues, normalizeEegValues]);
 
-  // 計算腦活力 (Brain Activity)
+  // 计算脑活力 (Brain Activity)
   const calculateBrainActivity = useCallback(() => {
-    // 獲取需要的頻段數據
+    // 获取需要的频段数据
     const lowBetaValues = gameState.lowBetaValues || [];
     const highBetaValues = gameState.highBetaValues || [];
     const lowGammaValues = gameState.lowGammaValues || [];
     const midGammaValues = gameState.midGammaValues || [];
     
-    // 如果沒有數據，返回默認值
+    // 如果没有数据，返回默认值
     if (lowBetaValues.length === 0 && highBetaValues.length === 0 && 
         lowGammaValues.length === 0 && midGammaValues.length === 0) {
       return 50;
     }
     
-    // 計算各頻段的平均值
+    // 计算各频段的平均值
     const avgLowBeta = lowBetaValues.length > 0 ? 
       lowBetaValues.reduce((sum, val) => sum + val, 0) / lowBetaValues.length : 0;
     const avgHighBeta = highBetaValues.length > 0 ? 
@@ -890,107 +888,107 @@ const Evaluate = forwardRef((props, ref) => {
     const avgMidGamma = midGammaValues.length > 0 ? 
       midGammaValues.reduce((sum, val) => sum + val, 0) / midGammaValues.length : 0;
     
-    // 將所有非零平均值放入數組
+    // 将所有非零平均值放入数组
     const values = [];
     if (avgLowBeta > 0) values.push(avgLowBeta);
     if (avgHighBeta > 0) values.push(avgHighBeta);
     if (avgLowGamma > 0) values.push(avgLowGamma);
     if (avgMidGamma > 0) values.push(avgMidGamma);
     
-    // 如果沒有有效數據，返回默認值
+    // 如果没有有效数据，返回默认值
     if (values.length === 0) return 50;
     
-    // 標準化數據
+    // 标准化数据
     const normalized = normalizeEegValues(values);
     
-    // 計算腦活力: (歸一化的 Low Beta + 歸一化的 High Beta + 歸一化的 Low Gamma + 歸一化的 Mid Gamma) / 4
-    // 如果某些頻段沒有數據，我們只計算有數據的頻段
+    // 计算脑活力: (归一化的 Low Beta + 归一化的 High Beta + 归一化的 Low Gamma + 归一化的 Mid Gamma) / 4
+    // 如果某些频段没有数据，我们只计算有数据的频段
     const brainActivityScore = (normalized.reduce((sum, val) => sum + val, 0) / normalized.length) * 100;
     
-    // 確保分數在 0-100 範圍內
+    // 确保分数在 0-100 范围内
     return Math.max(0, Math.min(100, Math.round(brainActivityScore)));
   }, [gameState.lowBetaValues, gameState.highBetaValues, gameState.lowGammaValues, gameState.midGammaValues, normalizeEegValues]);
 
-  // 計算專注力 (Focus Ability)
+  // 计算专注力 (Focus Ability)
   const calculateFocusAbility = useCallback(() => {
-    // 獲取需要的頻段數據
+    // 获取需要的频段数据
     const alphaValues = [...(gameState.lowAlphaValues || []), ...(gameState.highAlphaValues || [])];
     const betaValues = [...(gameState.lowBetaValues || []), ...(gameState.highBetaValues || [])];
     
-    // 如果沒有數據，使用 attentionData 作為替代
+    // 如果没有数据，使用 attentionData 作为替代
     if ((alphaValues.length === 0 || betaValues.length === 0) && gameState.attentionData && gameState.attentionData.length > 0) {
       return calculateAverageAttention();
     }
     
-    // 如果仍然沒有數據，返回默認值
+    // 如果仍然没有数据，返回默认值
     if (alphaValues.length === 0 || betaValues.length === 0) {
       return 50;
     }
     
-    // 計算 Alpha 和 Beta 的平均值
+    // 计算 Alpha 和 Beta 的平均值
     const avgAlpha = alphaValues.reduce((sum, val) => sum + val, 0) / alphaValues.length;
     const avgBeta = betaValues.reduce((sum, val) => sum + val, 0) / betaValues.length;
     
-    // 標準化數據
+    // 标准化数据
     const normalizedValues = normalizeEegValues([avgAlpha, avgBeta]);
     const normalizedAlpha = normalizedValues[0];
     const normalizedBeta = normalizedValues[1];
     
-    // 計算專注力: [Beta / (Alpha + Beta)] × 100
+    // 计算专注力: [Beta / (Alpha + Beta)] × 100
     // 避免除以零
     if (normalizedAlpha + normalizedBeta === 0) return 50;
     
     const focusScore = (normalizedBeta / (normalizedAlpha + normalizedBeta)) * 100;
     
-    // 確保分數在 0-100 範圍內
+    // 确保分数在 0-100 范围内
     return Math.max(0, Math.min(100, Math.round(focusScore)));
   }, [gameState.lowAlphaValues, gameState.highAlphaValues, gameState.lowBetaValues, gameState.highBetaValues, 
       gameState.attentionData, calculateAverageAttention, normalizeEegValues]);
 
-  // 計算感知力 (Perception Ability)
+  // 计算感知力 (Perception Ability)
   const calculatePerceptionAbility = useCallback(() => {
-    // 獲取需要的頻段數據
+    // 获取需要的频段数据
     const thetaValues = gameState.thetaValues || [];
     const gammaValues = [...(gameState.lowGammaValues || []), ...(gameState.midGammaValues || [])];
     
-    // 如果沒有數據，返回默認值
+    // 如果没有数据，返回默认值
     if (thetaValues.length === 0 && gammaValues.length === 0) {
       return 50;
     }
     
-    // 計算 Theta 和 Gamma 的平均值
+    // 计算 Theta 和 Gamma 的平均值
     const avgTheta = thetaValues.length > 0 ? 
       thetaValues.reduce((sum, val) => sum + val, 0) / thetaValues.length : 0;
     const avgGamma = gammaValues.length > 0 ? 
       gammaValues.reduce((sum, val) => sum + val, 0) / gammaValues.length : 0;
     
-    // 如果只有一種數據可用
+    // 如果只有一种数据可用
     if (thetaValues.length === 0) return Math.min(100, Math.max(0, avgGamma / 10000 * 100));
     if (gammaValues.length === 0) return Math.min(100, Math.max(0, avgTheta / 10000 * 100));
     
-    // 標準化數據
+    // 标准化数据
     const normalizedValues = normalizeEegValues([avgTheta, avgGamma]);
     const normalizedTheta = normalizedValues[0];
     const normalizedGamma = normalizedValues[1];
     
-    // 計算感知力: Theta × 0.4 + Gamma × 0.6
+    // 计算感知力: Theta × 0.4 + Gamma × 0.6
     const perceptionScore = (normalizedTheta * 0.4 + normalizedGamma * 0.6) * 100;
     
-    // 確保分數在 0-100 範圍內
+    // 确保分数在 0-100 范围内
     return Math.max(0, Math.min(100, Math.round(perceptionScore)));
   }, [gameState.thetaValues, gameState.lowGammaValues, gameState.midGammaValues, normalizeEegValues]);
 
   const calculateSuperPower = useCallback(() => {
     if (!gameState.thetaValues || gameState.thetaValues.length === 0) {
-      console.log('沒有 Theta 數據，返回預設值');
-      return 50; // 返回一個預設值而不是0
+      console.log('没有 Theta 数据，返回预设值');
+      return 50; // 返回一个预设值而不是0
     }
 
-    // 過濾掉異常值
+    // 过滤掉异常值
     const validThetaValues = gameState.thetaValues.filter(value => {
-      const isValid = value >= 4.3 && value <= 1000000; // 調整上限為更合理的值
+      const isValid = value >= 4.3 && value <= 1000000; // 调整上限为更合理的值
       if (!isValid) {
-        console.log('過濾掉異常 Theta 值:', value);
+        console.log('过滤掉异常 Theta 值:', value);
       }
       return isValid;
     });
@@ -1003,7 +1001,7 @@ const Evaluate = forwardRef((props, ref) => {
     // });
 
     if (validThetaValues.length === 0) {
-      console.log('沒有有效的 Theta 數據，返回預設值');
+      console.log('没有有效的 Theta 数据，返回预设值');
       return 50;
     }
 
@@ -1024,9 +1022,9 @@ const Evaluate = forwardRef((props, ref) => {
     return Math.round(superAbilityScore);
   }, [gameState.thetaValues, computeSuperAbility]);
 
-  // 計算總分
+  // 计算总分
   const calculateScore = useCallback(() => {
-    // console.log('開始計算分數，當前 throwHistory:', gameState.throwHistory);
+    // console.log('开始计算分数，当前 throwHistory:', gameState.throwHistory);
     
     let totalScore = 0;
     const scoreDetails = [];
@@ -1036,7 +1034,7 @@ const Evaluate = forwardRef((props, ref) => {
         const throwScore = throw_.isBigThrow ? GAME_CONFIG.SCORE_PER_BIG_HIT : GAME_CONFIG.SCORE_PER_HIT;
         totalScore += throwScore;
         
-        console.log(`第 ${index + 1} 次投擲:`, {
+        console.log(`第 ${index + 1} 次投掷:`, {
           isBigThrow: throw_.isBigThrow,
           score: throwScore,
           runningTotal: totalScore
@@ -1051,7 +1049,7 @@ const Evaluate = forwardRef((props, ref) => {
       }
     });
 
-    console.log('分數計算結果:', {
+    console.log('分数计算结果:', {
       scoreDetails,
       totalScore,
       SCORE_PER_HIT: GAME_CONFIG.SCORE_PER_HIT,
@@ -1061,34 +1059,34 @@ const Evaluate = forwardRef((props, ref) => {
     return totalScore;
   }, [gameState.throwHistory]);
 
-  // 計算群眾百分比位置
+  // 计算群众百分比位置
   const calculatePercentilePosition = useCallback(() => {
     const hitCount = gameState.successCount;
     let cumulativePercentage = 0;
     
-    // 計算到當前命中數的累積百分比
+    // 计算到当前命中数的累积百分比
     for (let i = 0; i < hitCount; i++) {
       cumulativePercentage += GAME_CONFIG.HIT_DISTRIBUTION[i] || 0;
     }
     
-    // 直接返回四捨五入後的整數
+    // 直接返回四舍五入后的整数
     return Math.round(cumulativePercentage);
   }, [gameState.successCount]);
 
-  // 處理結束遊戲按鈕點擊
+  // 处理结束游戏按钮点击
   const handleEndGameButtonPress = useCallback(() => {
     Alert.alert(
-      '結束遊戲',
-      '確定要結束本次遊戲嗎？',
+      '结束游戏',
+      '确定要结束本次游戏吗？',
       [
         {
           text: '取消',
           style: 'cancel'
         },
         {
-          text: '確定',
+          text: '确定',
           onPress: () => {
-            console.log('使用者確認結束遊戲');
+            console.log('用户确认结束游戏');
             handleEndGame();
           }
         }
@@ -1107,14 +1105,14 @@ const Evaluate = forwardRef((props, ref) => {
   const [completed, setCompleted] = useState(new Array(TOTAL_PIECES).fill(false));
   const [showCompletionModal, setShowCompletionModal] = useState(false);
 
-  // 監控拼圖完成狀態
+  // 监控拼图完成状态
   useEffect(() => {
     if (completed.every(isComplete => isComplete)) {
       setShowCompletionModal(true);
     }
   }, [completed]);
 
-  // 初始化拼圖
+  // 初始化拼图
   useEffect(() => {
     const initialPieces = Array.from({ length: TOTAL_PIECES }, (_, index) => ({
       id: index + 1,
@@ -1123,19 +1121,19 @@ const Evaluate = forwardRef((props, ref) => {
       pan: new Animated.ValueXY(),
     }));
 
-    // 計算安全的可視範圍（考慮拼圖大小）
+    // 计算安全的可视范围（考虑拼图大小）
     const PIECE_SIZE = 50;
     const screenWidth = Dimensions.get('window').width;
     const screenHeight = Dimensions.get('window').height;
     const safeMargin = PIECE_SIZE;
     
-    // 修改可視範圍，確保拼圖不會超出畫面
+    // 修改可视范围，确保拼图不会超出画面
     const safeLeft = safeMargin;
     const safeRight = screenWidth - PIECE_SIZE - safeMargin;
-    const safeTop = 10; // 增加上方空間
-    const safeBottom = screenHeight * 0.6; // 限制在螢幕60%的高度內
+    const safeTop = 10; // 增加上方空间
+    const safeBottom = screenHeight * 0.6; // 限制在屏幕60%的高度内
 
-    // 計算拼圖底圖的邊界
+    // 计算拼图底图的边界
     const GRID_SIZE = 300;
     const GRID_OFFSET_X = (screenWidth - GRID_SIZE) / 2;
     const GRID_OFFSET_Y = 50;
@@ -1144,13 +1142,13 @@ const Evaluate = forwardRef((props, ref) => {
     const puzzleTop = GRID_OFFSET_Y;
     const puzzleBottom = GRID_OFFSET_Y + GRID_SIZE;
 
-    // 將拼圖均勻分布在四周
+    // 将拼图均匀分布在四周
     initialPieces.forEach((piece, index) => {
       const piecesPerSide = Math.ceil(TOTAL_PIECES / 4);
       const sideIndex = Math.floor(index / piecesPerSide);
       
       let x, y;
-      const spreadRange = PIECE_SIZE * 0.8; // 散布範圍
+      const spreadRange = PIECE_SIZE * 0.8; // 散布范围
       
       switch(sideIndex) {
         case 0: // 上方
@@ -1171,11 +1169,11 @@ const Evaluate = forwardRef((props, ref) => {
           break;
       }
       
-      // 確保拼圖在安全範圍內
+      // 确保拼图在安全范围内
       x = Math.max(safeLeft, Math.min(safeRight, x));
       y = Math.max(safeTop, Math.min(safeBottom, y));
       
-      // 加入小幅度的隨機偏移
+      // 加入小幅度的随机偏移
       x += (Math.random() - 0.5) * PIECE_SIZE * 0.3;
       y += (Math.random() - 0.5) * PIECE_SIZE * 0.3;
       
@@ -1185,25 +1183,24 @@ const Evaluate = forwardRef((props, ref) => {
     setPieces(initialPieces);
   }, []);
 
-  // 拼圖遊戲相關函數
   const handleAutoComplete = () => {
     const correctPositions = {
-      1:  { x:  45,  y:  80 },  // 橘色十字
-      2:  { x: 115,  y:  80 },  // 藍色圓形
+      1:  { x:  45,  y:  80 },  // 橙色十字
+      2:  { x: 115,  y:  80 },  // 蓝色圆形
       3:  { x: 185,  y:  80 },  // 紫色三角
-      4:  { x: 245,  y:  80 },  // 綠色半圓
-      5:  { x:  45,  y: 155 },  // 粉紅色星星
-      6:  { x: 115,  y: 155 },  // 橘色橢圓
-      7:  { x: 180,  y: 155 },  // 黃色五邊形
-      8:  { x: 245,  y: 155 },  // 淺藍色方形
-      9:  { x:  45,  y: 215 },  // 綠色梯形
-      10: { x: 110,  y: 220 },  // 紅色六角
-      11: { x: 175,  y: 215 },  // 藍色梅花
-      12: { x: 245,  y: 215 },  // 綠色愛心
-      13: { x:  45,  y: 285 },  // 黃色箭頭屋
+      4:  { x: 245,  y:  80 },  // 绿色半圆
+      5:  { x:  45,  y: 155 },  // 粉红色星星
+      6:  { x: 115,  y: 155 },  // 橙色椭圆
+      7:  { x: 180,  y: 155 },  // 黄色五边形
+      8:  { x: 245,  y: 155 },  // 浅蓝色方形
+      9:  { x:  45,  y: 215 },  // 绿色梯形
+      10: { x: 110,  y: 220 },  // 红色六角
+      11: { x: 175,  y: 215 },  // 蓝色梅花
+      12: { x: 245,  y: 215 },  // 绿色爱心
+      13: { x:  45,  y: 285 },  // 黄色箭头屋
       14: { x: 105,  y: 285 },  // 紫色X星
-      15: { x: 175,  y: 285 },  // 粉色方塊
-      16: { x: 245,  y: 285 },  // 紅色平行四邊形
+      15: { x: 175,  y: 285 },  // 粉色方块
+      16: { x: 245,  y: 285 },  // 红色平行四边形
     };
     
     const newPieces = [...pieces];
@@ -1283,7 +1280,7 @@ const Evaluate = forwardRef((props, ref) => {
               style={styles.buttonBackground}
               resizeMode="stretch"
             >
-              <Text style={styles.footerButtonText}>回首頁</Text>
+              <Text style={styles.footerButtonText}>回首页</Text>
             </ImageBackground>
           </TouchableOpacity>
           <TouchableOpacity 
@@ -1294,7 +1291,7 @@ const Evaluate = forwardRef((props, ref) => {
               style={styles.buttonBackground}
               resizeMode="stretch"
             >
-              <Text style={styles.footerButtonText}>歷史紀錄</Text>
+              <Text style={styles.footerButtonText}>历史记录</Text>
             </ImageBackground>
           </TouchableOpacity>
         </View>
@@ -1307,14 +1304,14 @@ const Evaluate = forwardRef((props, ref) => {
         visible={showCompletionModal}>
         <View style={styles.modalBackground}>
           <View style={[styles.loadingContainer, styles.completionContainer]}>
-            <Text style={styles.completionText}>恭喜完成拼圖！</Text>
+            <Text style={styles.completionText}>恭喜完成拼图！</Text>
             <TouchableOpacity
               style={styles.reportButton}
               onPress={() => {
                 handleEndGame();
                 setShowCompletionModal(false);
               }}>
-              <Text style={styles.reportButtonText}>查看報告</Text>
+              <Text style={styles.reportButtonText}>查看报告</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1386,8 +1383,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 10,
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingVertical: 5,
     borderRadius: 16,
     marginHorizontal: 10,
   },
@@ -1474,10 +1470,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   successIcon: {
-    color: '#4CAF50',  // 綠色
+    color: '#4CAF50',  // 绿色
   },
   failureIcon: {
-    color: '#f44336',  // 紅色
+    color: '#f44336',  // 红色
   },
   emptyIcon: {
     color: '#9e9e9e',  // 灰色
