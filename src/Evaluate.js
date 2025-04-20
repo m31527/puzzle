@@ -1128,7 +1128,19 @@ const Evaluate = forwardRef((props, ref) => {
     setPieces(initialPieces);
   }, []);
 
-  const handleAutoComplete = () => {
+  // 使用 useMemo 來優化 pieces 的計算，避免不必要的重計算
+  const memoizedPieces = useMemo(() => {
+    // 只在 pieces 變化時才重新計算，避免不必要的重新創建
+    return pieces;
+  }, [pieces]);
+
+  // 使用 useCallback 來優化 handlePiecePress 函數，避免不必要的重渲染
+  const memoizedHandlePiecePress = useCallback((index) => {
+    // 處理拼圖按下事件的邏輯
+    console.log(`Piece ${index} pressed`);
+  }, []);
+
+  const handleAutoComplete = useCallback(() => {
     const correctPositions = {
       1:  { x:  45,  y:  80 },  // 橙色十字
       2:  { x: 115,  y:  80 },  // 蓝色圆形
@@ -1156,12 +1168,7 @@ const Evaluate = forwardRef((props, ref) => {
     });
     setPieces(newPieces);
     setCompleted(new Array(TOTAL_PIECES).fill(true));
-  };
-
-  const handlePiecePress = (index) => {
-    // 如果需要處理拼圖點擊事件
-    console.log('Piece pressed:', index);
-  };
+  }, [pieces]);
 
   // 初始化計時器
   useEffect(() => {
@@ -1198,8 +1205,8 @@ const Evaluate = forwardRef((props, ref) => {
             gameData={gameData}
             completed={completed}
             handleAutoComplete={handleAutoComplete}
-            handlePiecePress={handlePiecePress}
-            pieces={pieces}
+            handlePiecePress={memoizedHandlePiecePress}
+            pieces={memoizedPieces}
             navigation={navigation}
           />
         </View>

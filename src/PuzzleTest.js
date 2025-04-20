@@ -104,6 +104,15 @@ const PuzzleTest = ({ gameData, completed: parentCompleted, handleAutoComplete, 
       piece.position.setValue(position);
     });
 
+    // 在 Animated.timing 中使用 useNativeDriver
+    initialPieces.forEach((piece, index) => {
+      Animated.timing(piece.position, {
+        toValue: positions[index],
+        duration: 500,
+        useNativeDriver: true // 設定為 true 以提高性能
+      }).start();
+    });
+
     setPieces(initialPieces);
   };
 
