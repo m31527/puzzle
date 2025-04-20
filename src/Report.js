@@ -207,7 +207,7 @@ const Report = () => {
       <G>
         <Path
           d={pathD}
-          fill="rgba(248, 196, 196, 0.3)"
+          fill="rgba(248, 89, 89, 0.3)"
           stroke="rgba(251, 142, 142, 0.2)"
           strokeWidth={2}
         />

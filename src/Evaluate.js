@@ -365,37 +365,6 @@ const Evaluate = forwardRef((props, ref) => {
     );
   }, [gameState.attentionData, gameState.meditationData, gameState.signalData]);
 
-  // 信号处理函数
-  const handleSignalChange = useCallback((signal) => {
-    if (!signal || !signal.signal || typeof signal.value !== 'number') {
-      return;
-    }
-
-    const currentTime = Date.now();
-    
-    // 使用防抖来减少更新频率
-    if (updateTimeoutRef.current) {
-      clearTimeout(updateTimeoutRef.current);
-    }
-
-    updateTimeoutRef.current = setTimeout(() => {
-      dispatch({
-        type: ACTION_TYPES.UPDATE_SIGNAL,
-        payload: {
-          type: signal.signal,
-          value: signal.value,
-          timestamp: currentTime
-        }
-      });
-
-      // console.log('收到信號更新:', {
-      //   type: signal.signal,
-      //   value: signal.value,
-      //   timestamp: currentTime
-      // });
-    }, 100);  // 100ms 的防抖延迟
-  }, []);
-
   // 处理 ESP32 数据
   const handleESP32Data = useCallback((event) => {
     try {
@@ -417,17 +386,6 @@ const Evaluate = forwardRef((props, ref) => {
       console.error('Evaluate - 处理 ESP32 数据错误:', error);
     }
   }, [gameState.attentionData, dispatch]);
-
-  // 处理错误
-  const handleError = useCallback((error) => {
-    // 将错误转换为警告
-    console.warn('ThinkGear 警告:', typeof error === 'object' ? error.error || '连接中断' : error);
-    
-    // 不要触发断开连接的处理
-    if (!testGenerator) {
-      setThinkGearConnected(false);
-    }
-  }, [testGenerator]);
 
   // 处理断开连接
   const handleDisconnect = useCallback(() => {
@@ -729,21 +687,6 @@ const Evaluate = forwardRef((props, ref) => {
     resetData
   ]);
 
-  // 处理投掷结果
-  const handleThrow = useCallback(() => {
-    const isSuccess = Math.random() < 0.5;  // 50% 成功率
-    
-    dispatch({
-      type: ACTION_TYPES.UPDATE_THROW_DATA,
-      payload: {
-        throwTime: Date.now(),
-        averageAttention: isSuccess ? 100 : 0
-      }
-    });
-
-    console.log('投掷结果:', isSuccess ? '成功' : '失败');  // 添加日志
-  }, []);
-
   // 计算准确率
   const calculateAccuracy = useCallback(() => {
     if (gameState.throwCount === 0) return 0;
@@ -757,14 +700,6 @@ const Evaluate = forwardRef((props, ref) => {
     const sum = values.reduce((acc, val) => acc + val, 0);
     return Math.round(sum / values.length);
   }, [gameState.attentionData]);
-
-  // 计算平均冥想度
-  const calculateAverageMeditation = useCallback(() => {
-    const values = gameState.meditationData;
-    if (values.length === 0) return 0;
-    const sum = values.reduce((acc, val) => acc + val, 0);
-    return Math.round(sum / values.length);
-  }, [gameState.meditationData]);
 
   // 计算脑力值
   const calculateBrainPower = useCallback(() => {
@@ -1093,6 +1028,22 @@ const Evaluate = forwardRef((props, ref) => {
     resetData
   }));
 
+  const capScore = (score) => {
+    if (score >= 100) {
+      return 97 + Math.floor(Math.random() * 3); // 随机生成 97, 98, 或 99
+    }
+    return score;
+  };
+
+  // 使用 useMemo 來優化計算結果，避免不必要的重計算
+  const computedValues = useMemo(() => {
+    const brainPower = capScore(calculateCoordinationAbility()); // 协调力（Coordination Ability）
+    const superPower = capScore(calculateBrainActivity()); // 脑活力（Brain Activity）
+    const stability = capScore(calculateFocusAbility()); // 专注力（Focus Ability）
+    const endurance = capScore(calculatePerceptionAbility()); // 感知力（Perception Ability）
+    return { brainPower, superPower, stability, endurance };
+  }, [gameState]);
+
   // 拼圖遊戲相關狀態
   const TOTAL_PIECES = 16;
   const [pieces, setPieces] = useState([]);
@@ -1222,18 +1173,6 @@ const Evaluate = forwardRef((props, ref) => {
       clearInterval(timer);
     };
   }, []);
-
-  // 初始化 TestDataGenerator
-  useEffect(() => {
-    if (isTestMode && testGenerator) {
-      testGenerator.startGenerating();
-    }
-    return () => {
-      if (testGenerator) {
-        testGenerator.stopGenerating();
-      }
-    };
-  }, [isTestMode, testGenerator]);
 
   // 組件卸載時清理
   useEffect(() => {
