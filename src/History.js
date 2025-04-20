@@ -99,7 +99,7 @@ const History = () => {
         </View>
         <FlatList
           data={records}
-          keyExtractor={(item) => item.timestamp}
+          keyExtractor={(item, index) => `${item.timestamp || 'null'}-${index}`}
           renderItem={({ item }) => (
             <TouchableOpacity 
               style={styles.tableRow}
@@ -109,7 +109,7 @@ const History = () => {
               <Text style={styles.tableCell}>{item.userName}</Text>
               <Text style={styles.tableCell}>{item.completionTime}</Text>
               <Text style={styles.tableCell}>
-                {item.score}
+                {/* {item.score} */}
                 <TouchableOpacity
                   style={styles.deleteButton}
                   onPress={() => {

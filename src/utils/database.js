@@ -19,6 +19,7 @@ export default class Database {
       });
 
       await this.createTables();
+      await this.migrateDB(); // Call the migration function after creating tables
       return this.db;
     } catch (error) {
       console.error('Error initializing database:', error);
@@ -45,7 +46,8 @@ export default class Database {
         superPower INTEGER,
         throwCount INTEGER,
         userName TEXT,
-        timestamp TEXT
+        timestamp TEXT,
+        completionTime TEXT
       );
     `;
 
@@ -53,6 +55,26 @@ export default class Database {
       await this.db.executeSql(createTableQuery);
     } catch (error) {
       console.error('Error creating tables:', error);
+    }
+  }
+
+  static async migrateDB() {
+    if (!this.db) {
+      await this.initDB();
+    }
+
+    try {
+      const columnCheckQuery = "PRAGMA table_info(game_records);";
+      const [result] = await this.db.executeSql(columnCheckQuery);
+      const columns = result.rows.raw();
+      const columnExists = columns.some(column => column.name === 'completionTime');
+
+      if (!columnExists) {
+        const alterTableQuery = "ALTER TABLE game_records ADD COLUMN completionTime TEXT;";
+        await this.db.executeSql(alterTableQuery);
+      }
+    } catch (error) {
+      console.error('Error during migration:', error);
     }
   }
 
@@ -74,8 +96,9 @@ export default class Database {
         superPower,
         throwCount,
         userName,
-        timestamp
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        timestamp,
+        completionTime
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `;
 
     const values = [
@@ -90,7 +113,8 @@ export default class Database {
       gameRecord.superPower || 0,
       gameRecord.throwCount || 0,
       gameRecord.userName || 'Anonymous',
-      gameRecord.timestamp
+      gameRecord.timestamp,
+      gameRecord.completionTime
     ];
 
     try {

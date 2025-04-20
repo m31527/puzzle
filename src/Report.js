@@ -27,19 +27,19 @@ const Report = () => {
   const { pauseProcessing, resumeProcessing } = useAppState();
   const isFocused = useIsFocused();
   
-  // 確保從不同來源進入時都能正確獲取數據
+  // 确保从不同来源进入时都能正确获取数据
   const [reportData, setReportData] = useState(null);
 
-  // 使用 useEffect 來處理頁面焦點變化
+  // 使用 useEffect 来处理页面焦点变化
   useEffect(() => {
     if (isFocused) {
-      console.log('Report 頁面獲得焦點，暫停背景處理');
+      console.log('Report 页面获得焦点，暂停背景处理');
       pauseProcessing();
     }
     
     return () => {
       if (!isFocused) {
-        console.log('Report 頁面失去焦點，恢復背景處理');
+        console.log('Report 页面失去焦点，恢复背景处理');
         resumeProcessing();
       }
     };
@@ -48,31 +48,31 @@ const Report = () => {
   useEffect(() => {
     //console.log('Report received params:', route.params);
     
-    // 檢查數據來源並設置數據
+    // 检查数据来源并设置数据
     if (route.params) {
       if (route.params.gameData) {
-        // 來自遊戲結束
+        // 来自游戏结束
         // console.log('Data from game end:', route.params.gameData);
         setReportData(route.params.gameData);
       } else if (route.params.historyData) {
-        // 來自歷史記錄
+        // 来自历史记录
         // console.log('Data from history:', route.params.historyData);
         setReportData(route.params.historyData);
       }
     }
   }, [route.params]);
 
-  // 如果還沒有數據，顯示載入中
+  // 如果还没有数据，显示加载中
   if (!reportData) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#FFFFFF" />
-        <Text style={styles.loadingText}>載入中...</Text>
+        <Text style={styles.loadingText}>加载中...</Text>
       </View>
     );
   }
 
-  // 從 reportData 中解構數據
+  // 从 reportData 中解构数据
   const {
     superPower = 0,
     brainPower = 0,
@@ -84,12 +84,12 @@ const Report = () => {
     completionTime = 0,
   } = reportData;
 
-  const userName = '受試者';
+  const userName = '受试者';
 
-  // 使用從遊戲傳來的分數
+  // 使用从游戏传来的分数
   const finalScore = score;  
 
-  // 計算群眾百分比位置
+  // 计算群众百分比位置
   const calculatePercentile = () => {
     let cumulativePercentage = 0;
     for (let i = 0; i < successCount; i++) {
@@ -100,15 +100,15 @@ const Report = () => {
 
   const percentilePosition = calculatePercentile();
 
-  // 圈形圖表的參數
+  // 圈形图表的参数
 
-  // 圓形圖表的參數
+  // 圆形图表的参数
   const windowWidth = Dimensions.get('window').width;
   const centerX = windowWidth / 2;
-  const radius = windowWidth * 0.35;  // 增加圖表大小
+  const radius = windowWidth * 0.35;  // 增加图表大小
   const strokeWidth = 1;
 
-  // 繪製同心圓和刻度的函數
+  // 绘制同心圆和刻度的函数
   const renderCirclesAndScales = () => {
     const circles = [];
     const numCircles = 5;
@@ -140,7 +140,7 @@ const Report = () => {
     return circles;
   };
 
-  // 繪製軸線的函數
+  // 绘制轴线的函数
   const renderAxes = () => {
     const axes = [];
     const numAxes = 4;
@@ -182,7 +182,7 @@ const Report = () => {
     return axes;
   };
 
-  // 繪製數據區域
+  // 绘制数据区域
   const renderDataArea = () => {
     const values = [superPower, brainPower, stability, endurance];
     const numPoints = 4;
@@ -259,55 +259,7 @@ const Report = () => {
     navigation.navigate('Evaluate');
   };
 
-  // 顯示詳細報告
-  const showDetailedReport = () => {
-    console.log('點擊了報告按鈕');
-    
-    // 简单测试Alert是否正常工作
-    Alert.alert(
-      '测试提示', 
-      '测试Alert组件是否正常工作',
-      [{ text: 'OK', onPress: () => console.log('OK Pressed') }]
-    );
-    
-    try {
-      console.log('开始获取级别信息');
-      // 獲取各項能力的評估級別
-      const coordinationLevel = getLevel(brainPower);
-      const brainActivityLevel = getLevel(superPower);
-      const focusLevel = getLevel(stability);
-      const perceptionLevel = getLevel(endurance);
-      
-      console.log('获取级别成功:', { coordinationLevel, brainActivityLevel, focusLevel, perceptionLevel });
-      
-      // 獲取協調力評估詳情
-      console.log('开始获取评估详情');
-      const coordinationAssessment = getCoordinationAssessment(coordinationLevel);
-      console.log('获取协调力评估成功');
-      
-      // 顯示協調力評估報告
-      console.log('尝试显示 Alert');
-      Alert.alert(
-        `協調力: ${coordinationLevel}级 - ${coordinationAssessment.title}`,
-        `${coordinationAssessment.description}\n\n表现特征:\n${coordinationAssessment.features.map(feature => `• ${feature}`).join('\n')}\n\n建议:\n${coordinationAssessment.suggestions.map(suggestion => `• ${suggestion}`).join('\n')}`,
-        [
-          { 
-            text: '查看脑活力', 
-            onPress: () => showBrainActivityReport(brainActivityLevel) 
-          },
-          { 
-            text: '关闭', 
-            style: 'cancel' 
-          }
-        ]
-      );
-    } catch (error) {
-      console.error('顯示報告時發生錯誤:', error);
-      Alert.alert('錯誤', `顯示報告時發生錯誤: ${error.message || error}`);
-    }
-  };
-  
-  // 顯示腦活力報告
+  // 显示脑活力报告
   const showBrainActivityReport = (level) => {
     const assessment = getBrainActivityAssessment(level);
     Alert.alert(
@@ -326,7 +278,7 @@ const Report = () => {
     );
   };
   
-  // 顯示專注力報告
+  // 显示专注力报告
   const showFocusReport = (level) => {
     const assessment = getFocusAbilityAssessment(level);
     Alert.alert(
@@ -345,7 +297,7 @@ const Report = () => {
     );
   };
   
-  // 顯示感知力報告
+  // 显示感知力报告
   const showPerceptionReport = (level) => {
     const assessment = getPerceptionAbilityAssessment(level);
     Alert.alert(
@@ -360,35 +312,35 @@ const Report = () => {
     );
   };
 
-  // 生成 PDF 並打開查看
+  // 生成 PDF 并打开查看
   const handleDownload = async (htmlContent, fileName) => {
     try {
-      console.log('開始生成 PDF...');
+      console.log('开始生成 PDF...');
       
       // 生成 PDF 文件
       const options = {
         html: htmlContent,
-        fileName: fileName || `腦電波報告_${new Date().getTime()}`,
+        fileName: fileName || `脑电波报告_${new Date().getTime()}`,
         directory: 'Documents',
         orientation: 'landscape', // Ensure A4 landscape
         pageSize: 'A4', // Ensure it's A4
       };
       console.log('---RNHTMLtoPDF:', RNHTMLtoPDF);
       const file = await RNHTMLtoPDF.convert(options);
-      console.log('生成的PDF文件路徑:', file.filePath);
+      console.log('生成的PDF文件路径:', file.filePath);
       
-      // 導航到 PDFView 頁面查看 PDF
+      // 导航到 PDFView 页面查看 PDF
       navigation.navigate('PDFView', { pdfPath: file.filePath });
       
-      // 顯示成功提示
+      // 显示成功提示
       if (Platform.OS === 'android') {
-        ToastAndroid.show('報告生成成功', ToastAndroid.SHORT);
+        ToastAndroid.show('报告生成成功', ToastAndroid.SHORT);
       }
       
       return file.filePath;
     } catch (error) {
-      console.error('生成PDF時發生錯誤:', error);
-      Alert.alert('錯誤', `生成PDF時發生錯誤: ${error.message || error}`);
+      console.error('生成PDF时发生错误:', error);
+      Alert.alert('错误', `生成PDF时发生错误: ${error.message || error}`);
       return null;
     }
   };
@@ -399,14 +351,14 @@ const Report = () => {
       style={styles.background}
     >
       <View style={styles.titleContainer}>
-        <Text style={styles.titleText}>拼圖遊戲</Text>
+        <Text style={styles.titleText}>拼图游戏</Text>
       </View>
       
       <View style={styles.contentContainer}>
         {renderAbilityChart()}
         
-        <Text style={styles.nameText}>姓名：{userName} , 完成時間：{completionTime} 秒</Text>
-         {/* 右上角查看報告按鈕 - 使用更明顯的按鈕樣式 */}
+        <Text style={styles.nameText}>姓名：{userName} , 完成时间：{completionTime} 秒</Text>
+         {/* 右上角查看报告按钮 - 使用更明显的按钮样式 */}
          <TouchableOpacity
           style={{
             borderColor: '#FFC0CB', // Pink border
@@ -420,31 +372,31 @@ const Report = () => {
             backgroundColor: '#FFFFFF',
           }}
           onPress={async () => {
-            console.log('點擊了報告按鈕');
+            console.log('点击了报告按钮');
             
             try {
-              // 顯示變化提示
-              Alert.alert('提示', '正在生成報告...');
+              // 显示变化提示
+              Alert.alert('提示', '正在生成报告...');
               
-              // 獲取各項能力的評估級別
+              // 获取各项能力的评估级别
               const coordinationLevel = getLevel(brainPower);
               const brainActivityLevel = getLevel(superPower);
               const focusLevel = getLevel(stability);
               const perceptionLevel = getLevel(endurance);
               
-              // 獲取各項能力的評估詳情
+              // 获取各项能力的评估详情
               const coordinationAssessment = getCoordinationAssessment(coordinationLevel);
               const brainActivityAssessment = getBrainActivityAssessment(brainActivityLevel);
               const focusAssessment = getFocusAbilityAssessment(focusLevel);
               const perceptionAssessment = getPerceptionAbilityAssessment(perceptionLevel);
               
-              // 創建 HTML 報告內容
+              // 创建 HTML 报告内容
               const htmlContent = `
                 <!DOCTYPE html>
                 <html>
                 <head>
                   <meta charset="utf-8">
-                  <title>脑電波分析報告</title>
+                  <title>脑电波分析报告</title>
                   <style>
                     body { font-family: Arial, sans-serif; margin: 20px; }
                     h1 { color: #4CAF50; text-align: center; }
@@ -457,15 +409,15 @@ const Report = () => {
                   </style>
                 </head>
                 <body>
-                  <h1>脑電波指標等級評估報告</h1>
+                  <h1>脑电波指标等级评估报告</h1>
                   
                   <div class="info">
                     <p><strong>姓名：</strong>${userName}</p>
-                    <p><strong>完成時間：</strong>${completionTime} 秒</p>
-                    <p><strong>報告生成時間：</strong>${new Date().toLocaleString()}</p>
+                    <p><strong>完成时间：</strong>${completionTime} 秒</p>
+                    <p><strong>报告生成时间：</strong>${new Date().toLocaleString()}</p>
                   </div>
                   
-                  <h2>★ 協調力：<span class="level">${coordinationLevel}級 - ${coordinationAssessment.title}</span></h2>
+                  <h2>★ 协调力：<span class="level">${coordinationLevel}级 - ${coordinationAssessment.title}</span></h2>
                   <p>${coordinationAssessment.description}</p>
                   
                   <p><strong>表现特征：</strong></p>
@@ -473,12 +425,12 @@ const Report = () => {
                     ${coordinationAssessment.features.map(feature => `<li class="feature-item">${feature}</li>`).join('')}
                   </ul>
                   
-                  <p><strong>建議：</strong></p>
+                  <p><strong>建议：</strong></p>
                   <ul class="suggestions">
                     ${coordinationAssessment.suggestions.map(suggestion => `<li class="suggestion-item">${suggestion}</li>`).join('')}
                   </ul>
                   
-                  <h2>★ 腦活力：<span class="level">${brainActivityLevel}級 - ${brainActivityAssessment.title}</span></h2>
+                  <h2>★ 脑活力：<span class="level">${brainActivityLevel}级 - ${brainActivityAssessment.title}</span></h2>
                   <p>${brainActivityAssessment.description}</p>
                   
                   <p><strong>表现特征：</strong></p>
@@ -486,12 +438,12 @@ const Report = () => {
                     ${brainActivityAssessment.features.map(feature => `<li class="feature-item">${feature}</li>`).join('')}
                   </ul>
                   
-                  <p><strong>建議：</strong></p>
+                  <p><strong>建议：</strong></p>
                   <ul class="suggestions">
                     ${brainActivityAssessment.suggestions.map(suggestion => `<li class="suggestion-item">${suggestion}</li>`).join('')}
                   </ul>
                   
-                  <h2>★ 專注力：<span class="level">${focusLevel}級 - ${focusAssessment.title}</span></h2>
+                  <h2>★ 专注力：<span class="level">${focusLevel}级 - ${focusAssessment.title}</span></h2>
                   <p>${focusAssessment.description}</p>
                   
                   <p><strong>表现特征：</strong></p>
@@ -499,12 +451,12 @@ const Report = () => {
                     ${focusAssessment.features.map(feature => `<li class="feature-item">${feature}</li>`).join('')}
                   </ul>
                   
-                  <p><strong>建議：</strong></p>
+                  <p><strong>建议：</strong></p>
                   <ul class="suggestions">
                     ${focusAssessment.suggestions.map(suggestion => `<li class="suggestion-item">${suggestion}</li>`).join('')}
                   </ul>
                   
-                  <h2>★ 感知力：<span class="level">${perceptionLevel}級 - ${perceptionAssessment.title}</span></h2>
+                  <h2>★ 感知力：<span class="level">${perceptionLevel}级 - ${perceptionAssessment.title}</span></h2>
                   <p>${perceptionAssessment.description}</p>
                   
                   <p><strong>表现特征：</strong></p>
@@ -512,7 +464,7 @@ const Report = () => {
                     ${perceptionAssessment.features.map(feature => `<li class="feature-item">${feature}</li>`).join('')}
                   </ul>
                   
-                  <p><strong>建議：</strong></p>
+                  <p><strong>建议：</strong></p>
                   <ul class="suggestions">
                     ${perceptionAssessment.suggestions.map(suggestion => `<li class="suggestion-item">${suggestion}</li>`).join('')}
                   </ul>
@@ -554,30 +506,30 @@ const Report = () => {
               `;
               
               try {
-                // 使用 handleDownload 函數生成 PDF
-                const fileName = `脑電波報告_${userName}_${new Date().getTime()}`;
+                // 使用 handleDownload 函数生成 PDF
+                const fileName = `脑电波报告_${userName}_${new Date().getTime()}`;
                 await handleDownload(htmlContent, fileName);
               } catch (error) {
-                console.log('RNHTMLtoPDF 不可用，使用備用方案...', error);
-                // 備用方案：顯示報告內容
+                console.log('RNHTMLtoPDF 不可用，使用备用方案...', error);
+                // 备用方案：显示报告内容
                 Alert.alert(
-                  '腦電波評估報告',
-                  `姓名：${userName}\n完成時間：${completionTime} 秒\n\n協調力: ${coordinationLevel}級 - ${coordinationAssessment.title}\n腦活力: ${brainActivityLevel}級 - ${brainActivityAssessment.title}\n專注力: ${focusLevel}級 - ${focusAssessment.title}\n感知力: ${perceptionLevel}級 - ${perceptionAssessment.title}`,
+                  '脑电波评估报告',
+                  `姓名：${userName}\n完成时间：${completionTime} 秒\n\n协调力: ${coordinationAssessment.title}\n脑活力: ${brainActivityAssessment.title}\n专注力: ${focusAssessment.title}\n感知力: ${perceptionAssessment.title}`,
                   [
                     { 
-                      text: '複製報告', 
+                      text: '复制报告', 
                       onPress: () => {
-                        const reportText = `腦電波評估報告\n\n姓名：${userName}\n完成時間：${completionTime} 秒\n\n協調力: ${coordinationLevel}級 - ${coordinationAssessment.title}\n${coordinationAssessment.description}\n\n腦活力: ${brainActivityLevel}級 - ${brainActivityAssessment.title}\n${brainActivityAssessment.description}\n\n專注力: ${focusLevel}級 - ${focusAssessment.title}\n${focusAssessment.description}\n\n感知力: ${perceptionLevel}級 - ${perceptionAssessment.title}\n${perceptionAssessment.description}`;
+                        const reportText = `脑电波评估报告\n\n姓名：${userName}\n完成时间：${completionTime} 秒\n\n协调力: ${coordinationAssessment.title}\n${coordinationAssessment.description}\n\n脑活力: ${brainActivityAssessment.title}\n${brainActivityAssessment.description}\n\n专注力: ${focusAssessment.title}\n${focusAssessment.description}\n\n感知力: ${perceptionAssessment.title}\n${perceptionAssessment.description}`;
                         Clipboard.setString(reportText);
                         if (Platform.OS === 'android') {
-                          ToastAndroid.show('報告已複製到剪貼板', ToastAndroid.SHORT);
+                          ToastAndroid.show('报告已复制到剪贴板', ToastAndroid.SHORT);
                         } else {
-                          Alert.alert('成功', '報告已複製到剪貼板');
+                          Alert.alert('成功', '报告已复制到剪贴板');
                         }
                       } 
                     },
                     { 
-                      text: '關閉', 
+                      text: '关闭', 
                       style: 'cancel' 
                     }
                   ]
@@ -585,19 +537,19 @@ const Report = () => {
               }
               
             } catch (error) {
-              console.error('生成PDF報告時發生錯誤:', error);
+              console.error('生成PDF报告时发生错误:', error);
               
-              // 如果 PDF 生成失敗，則顯示簡化報告
+              // 如果 PDF 生成失败，则显示简化报告
               Alert.alert(
-                '脑電波評估報告', 
-                `姓名：${userName}\n完成時間：${completionTime} 秒\n\n協調力: ${coordinationLevel}級 - ${coordinationAssessment.title}\n腦活力: ${brainActivityLevel}級 - ${brainActivityAssessment.title}\n專注力: ${focusLevel}級 - ${focusAssessment.title}\n感知力: ${perceptionLevel}級 - ${perceptionAssessment.title}`,
+                '脑电波评估报告', 
+                `姓名：${userName}\n完成时间：${completionTime} 秒\n\n协调力: ${coordinationAssessment.title}\n脑活力: ${brainActivityAssessment.title}\n专注力: ${focusAssessment.title}\n感知力: ${perceptionAssessment.title}`,
                 [{ text: 'OK', style: 'default' }]
               );
             }
           }}
           activeOpacity={0.7}
         >
-          <Text style={{ color: '#FFC0CB', fontWeight: 'bold', fontSize: 16 }}>查看報告</Text>
+          <Text style={{ color: '#FFC0CB', fontWeight: 'bold', fontSize: 16 }}>查看报告</Text>
         </TouchableOpacity>
         <View style={styles.statsContainer}>
           <View style={[styles.statsBox, styles.throwsBox]}>
@@ -629,7 +581,7 @@ const Report = () => {
             style={styles.buttonBackground}
             resizeMode="stretch"
           >
-            <Text style={styles.buttonText}>回首頁</Text>
+            <Text style={styles.buttonText}>回首页</Text>
           </ImageBackground>
         </TouchableOpacity>
 

@@ -646,13 +646,8 @@ const Evaluate = forwardRef((props, ref) => {
   // 处理结束游戏
   const handleEndGame = useCallback(async () => {
     try {
-      //console.log('准备结束游戏，当前游戏状态:', gameState);
       
       const accuracy = calculateAccuracy();
-      // const brainPower = calculateBrainPower();
-      // const superPower = calculateSuperPower();
-      // const endurance = calculateEndurance();
-      // const stability = calculateStability();
       
       // 确保分数不会达到100，如果是100分则随机给97-99分
       const capScore = (score) => {
@@ -670,7 +665,22 @@ const Evaluate = forwardRef((props, ref) => {
 
       const score = calculateScore();
       const percentilePosition = calculatePercentilePosition();
-            
+      
+      gameData = {
+        throwCount: gameState.throwCount,
+        successCount: gameState.successCount,
+        accuracy,
+        brainPower,
+        superPower,
+        endurance,
+        stability,
+        score,
+        percentilePosition,
+        timestamp: new Date().toISOString(),
+        attentionHistory: validAttentionData,
+        meditationHistory: validMeditationData,
+        completionTime: timeCounter
+      };
       // 存储游戏数据
       await Database.saveGameRecord(gameData);
       
@@ -687,22 +697,6 @@ const Evaluate = forwardRef((props, ref) => {
       const validMeditationData = Array.isArray(gameState.meditationData)
         ? gameState.meditationData.map(v => Number(v) || 0)
         : [0];
-
-      gameData = {
-        throwCount: gameState.throwCount,
-        successCount: gameState.successCount,
-        accuracy,
-        brainPower,
-        superPower,
-        endurance,
-        stability,
-        score,
-        percentilePosition,
-        timestamp: new Date().toISOString(),
-        attentionHistory: validAttentionData,
-        meditationHistory: validMeditationData,
-        completionTime: timeCounter
-      };
 
       console.log('游戏结束，完整数据:', gameData);
 
