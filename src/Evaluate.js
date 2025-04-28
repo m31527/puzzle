@@ -226,46 +226,6 @@ function gameDataReducer(state, action) {
 }
 
 // 投掷结果组件
-const ThrowResults = React.memo(({ gameState }) => {
-  const recentThrows = 5;
-  const throwHistory = (gameState.throwHistory || []).slice().reverse();  // 反转数组以显示最新的结果在左边
-  //const accuracy = gameState.throwCount > 0 ? Math.round((gameState.successCount / gameState.throwCount) * 100) : 0;
-
-  // console.log('ThrowResults 渲染:', {
-  //   throwCount: gameState.throwCount,
-  //   successCount: gameState.successCount,
-  //   throwHistory: throwHistory,
-  //   accuracy
-  // });
-
-  const results = [];
-  for (let i = 0; i < recentThrows; i++) {
-    const hasThrow = i < throwHistory.length;
-    const isSuccess = hasThrow && throwHistory[i].success;
-    
-    results.push(
-      <View key={i} style={styles.accuracyItem}>
-        <Text style={[
-          styles.accuracyIcon,
-          hasThrow ? (isSuccess ? styles.successIcon : styles.failureIcon) : styles.emptyIcon
-        ]}>
-          {hasThrow ? (isSuccess ? '✓' : '✗') : '-'}
-        </Text>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.accuracyContainer}>
-      <Text style={styles.accuracyText}>
-        准确率: {accuracy}% ({gameState.successCount}/{GAME_CONFIG.MAX_THROWS})
-      </Text>
-      <View style={styles.accuracyGrid}>
-        {results}
-      </View>
-    </View>
-  );
-});
 
 const Evaluate = forwardRef((props, ref) => {
   const navigation = useNavigation();
@@ -302,68 +262,7 @@ const Evaluate = forwardRef((props, ref) => {
     formatXLabel: (value) => '',
   };
 
-  const renderChart = useCallback(() => {
-    // 确保数据有效
-    const validAttentionData = Array.isArray(gameState.attentionData) 
-      ? gameState.attentionData.map(v => Number(v) || 0)
-      : [0];
-    const validMeditationData = gameState.meditationData.map(v => Number(v) || 0);
-    const validSignalData = gameState.signalData.map(v => Number(v) || 0);
-
-    // console.log('圖表數據:', {
-    //   attention: validAttentionData,
-    //   meditation: validMeditationData,
-    //   signal: validSignalData,
-    //   attentionLength: validAttentionData.length
-    // });
-
-    const chartData = {
-      labels: Array.from({ length: Math.max(validAttentionData.length, 30) }, (_, i) => ''),
-      datasets: [
-        {
-          data: validAttentionData,
-          color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`, // 紅色
-          strokeWidth: 2,
-        },
-        {
-          data: validMeditationData.length ? validMeditationData : [0],
-          color: (opacity = 1) => `rgba(0, 255, 0, ${opacity})`, // 綠色
-          strokeWidth: 2,
-        },
-        {
-          data: validSignalData.length ? validSignalData : [0],
-          color: (opacity = 1) => `rgba(0, 0, 255, ${opacity})`, // 藍色
-          strokeWidth: 2,
-        },
-      ],
-      legend: ['专注度', '放松度', '信号强度']
-    };
-
-    return (
-      <View style={styles.chartContainer}>
-        <LineChart
-          data={chartData}
-          width={Dimensions.get('window').width - 16}
-          height={220}
-          chartConfig={chartConfig}
-          bezier
-          style={{
-            marginVertical: 8,
-            borderRadius: 16,
-          }}
-          withDots={false}
-          withInnerLines={true}
-          withOuterLines={true}
-          withVerticalLines={false}
-          withHorizontalLines={true}
-          withVerticalLabels={false}
-          withHorizontalLabels={true}
-          fromZero={true}
-          yAxisInterval={20}
-        />
-      </View>
-    );
-  }, [gameState.attentionData, gameState.meditationData, gameState.signalData]);
+  
 
   // 处理 ESP32 数据
   const handleESP32Data = useCallback((event) => {
@@ -386,28 +285,6 @@ const Evaluate = forwardRef((props, ref) => {
       console.error('Evaluate - 处理 ESP32 数据错误:', error);
     }
   }, [gameState.attentionData, dispatch]);
-
-  // 处理断开连接
-  const handleDisconnect = useCallback(() => {
-    console.warn('设备连接中断');
-    if (!testGenerator) {
-      setThinkGearConnected(false);
-      
-      // 如果重试次数未超过上限，尝试重新连接
-      if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-        setReconnectAttempts(prev => prev + 1);
-        console.warn(`尝试重新连接 (${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
-        
-        // 延迟 2 秒后重试
-        setTimeout(() => {
-          NativeModules.NeuroSkyModule.connect()
-            .catch(err => {
-              console.warn('重新连接失败:', err);
-            });
-        }, 2000);
-      }
-    }
-  }, [reconnectAttempts, testGenerator]);
 
   // 设置事件监听器
   const subscriptionsRef = useRef([]);
@@ -1002,28 +879,6 @@ const Evaluate = forwardRef((props, ref) => {
     return Math.round(cumulativePercentage);
   }, [gameState.successCount]);
 
-  // 处理结束游戏按钮点击
-  const handleEndGameButtonPress = useCallback(() => {
-    Alert.alert(
-      '结束游戏',
-      '确定要结束本次游戏吗？',
-      [
-        {
-          text: '取消',
-          style: 'cancel'
-        },
-        {
-          text: '确定',
-          onPress: () => {
-            console.log('用户确认结束游戏');
-            handleEndGame();
-          }
-        }
-      ],
-      { cancelable: false }
-    );
-  }, [handleEndGame]);
-
   useImperativeHandle(ref, () => ({
     resetData
   }));
@@ -1198,7 +1053,6 @@ const Evaluate = forwardRef((props, ref) => {
       style={styles.background}
     >
       <View style={styles.container}>
-        {renderChart()}
         {/* End game button */}
         <View style={styles.pizzleGameZone}>
           <PuzzleTest
