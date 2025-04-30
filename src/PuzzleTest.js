@@ -333,7 +333,7 @@ const PuzzleTest = ({ gameData, completed: parentCompleted, handleAutoComplete, 
 const styles = StyleSheet.create({
   progressContainer: {
     position: 'absolute',
-    top: 40,
+    top: 10,
     right: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     padding: 10,
@@ -344,6 +344,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   autoCompleteButton: {
     color: '#FFFFFF',

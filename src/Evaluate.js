@@ -5,7 +5,6 @@ import {
   View,
   TouchableOpacity,
   Dimensions,
-  DeviceEventEmitter,
   ImageBackground,
   Alert,
   ActivityIndicator,
@@ -15,13 +14,10 @@ import {
   Animated,
 } from 'react-native';
 
-import { LineChart } from 'react-native-chart-kit';
-import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import Database from './utils/database';
-import { useTest } from './contexts/TestContext';
 import { GAME_CONFIG } from './config/gameConfig';
 import PuzzleTest from './PuzzleTest';
-import TestDataGenerator from './TestDataGenerator';
 
 // 初始状态
 const initialState = {
@@ -58,6 +54,7 @@ const ACTION_TYPES = {
   UPDATE_THROW_DATA: 'UPDATE_THROW_DATA',
   UPDATE_RAW_DATA: 'UPDATE_RAW_DATA',
   UPDATE_ENDURANCE_DATA: 'UPDATE_ENDURANCE_DATA',
+  UPDATE_EEG_POWER: 'UPDATE_EEG_POWER', // 新增 EEG 功率数据更新的 action type
   UPDATE_THETA: 'UPDATE_THETA',  // 新增 theta 更新的 action type
   UPDATE_DELTA: 'UPDATE_DELTA',  // 新增 delta 更新的 action type
   UPDATE_LOW_ALPHA: 'UPDATE_LOW_ALPHA',  // 新增 lowAlpha 更新的 action type
@@ -181,37 +178,42 @@ function gameDataReducer(state, action) {
         totalAttentionCount: state.enduranceData.totalAttentionCount + action.payload.totalAttentionCount,
         lowAttentionCount: state.enduranceData.lowAttentionCount + action.payload.lowAttentionCount
       };
-      
-      // console.log('更新維持度數據:', {
-      //   current: newEnduranceData,
-      //   total: newEnduranceData.totalAttentionCount,
-      //   low: newEnduranceData.lowAttentionCount,
-      //   rate: ((newEnduranceData.totalAttentionCount - newEnduranceData.lowAttentionCount) / newEnduranceData.totalAttentionCount * 100).toFixed(2) + '%'
-      // });
 
       return {
         ...state,
         enduranceData: newEnduranceData
       };
       
-    case ACTION_TYPES.UPDATE_THETA: {
-      const validValue = Number(action.payload.value);
-      if (isNaN(validValue)) {
-        //console.log('無效的 Theta 值:', action.payload.value);
-        return state;
+    case ACTION_TYPES.UPDATE_EEG_POWER: {
+      const updates = action.payload;
+      const newState = { ...state };
+      
+      if (updates.theta) {
+        newState.thetaValues = [...(newState.thetaValues || []), updates.theta];
       }
-
-      const newThetaValues = [...(state.thetaValues || []), validValue];
-      // console.log('Theta 值更新:', {
-      //   新值: validValue,
-      //   目前數據量: newThetaValues.length,
-      //   所有值: newThetaValues
-      // });
-
-      return {
-        ...state,
-        thetaValues: newThetaValues
-      };
+      if (updates.delta) {
+        newState.deltaValues = [...(newState.deltaValues || []), updates.delta];
+      }
+      if (updates.lowAlpha) {
+        newState.lowAlphaValues = [...(newState.lowAlphaValues || []), updates.lowAlpha];
+      }
+      if (updates.highAlpha) {
+        newState.highAlphaValues = [...(newState.highAlphaValues || []), updates.highAlpha];
+      }
+      if (updates.lowBeta) {
+        newState.lowBetaValues = [...(newState.lowBetaValues || []), updates.lowBeta];
+      }
+      if (updates.highBeta) {
+        newState.highBetaValues = [...(newState.highBetaValues || []), updates.highBeta];
+      }
+      if (updates.lowGamma) {
+        newState.lowGammaValues = [...(newState.lowGammaValues || []), updates.lowGamma];
+      }
+      if (updates.midGamma) {
+        newState.midGammaValues = [...(newState.midGammaValues || []), updates.midGamma];
+      }
+      
+      return newState;
     }
     
     case ACTION_TYPES.RESET_GAME:
@@ -229,40 +231,11 @@ function gameDataReducer(state, action) {
 
 const Evaluate = forwardRef((props, ref) => {
   const navigation = useNavigation();
-  const route = useRoute();
   const isFocused = useIsFocused();
-  const [isTestMode, setIsTestMode] = useState(false);
   const [gameState, dispatch] = useReducer(gameDataReducer, initialState);
-  const [testGenerator] = useState(() => new TestDataGenerator());
-  const updateTimeoutRef = useRef(null);
   const [timeCounter, setTimeCounter] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('');
-  const [thinkGearConnected, setThinkGearConnected] = useState(false);
-  const [reconnectAttempts, setReconnectAttempts] = useState(0);
-  const MAX_RECONNECT_ATTEMPTS = 3;
-
-  // 圖表配置
-  const chartConfig = {
-    backgroundColor: '#ffffff',
-    backgroundGradientFrom: '#ffffff',
-    backgroundGradientTo: '#ffffff',
-    decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-    style: {
-      borderRadius: 16,
-    },
-    propsForDots: {
-      r: '4',
-      strokeWidth: '2',
-      stroke: '#ffa726',
-    },
-    formatYLabel: (value) => Math.round(value).toString(),
-    formatXLabel: (value) => '',
-  };
-
-  
 
   // 处理 ESP32 数据
   const handleESP32Data = useCallback((event) => {
@@ -285,6 +258,41 @@ const Evaluate = forwardRef((props, ref) => {
       console.error('Evaluate - 处理 ESP32 数据错误:', error);
     }
   }, [gameState.attentionData, dispatch]);
+
+  // 处理 EEG 功率数据
+  const handleEEGPowerData = useCallback((eegPower) => {
+    const updates = {};
+    if (typeof eegPower.theta === 'number') {
+      updates.theta = eegPower.theta;
+    }
+    if (typeof eegPower.delta === 'number') {
+      updates.delta = eegPower.delta;
+    }
+    if (typeof eegPower.lowAlpha === 'number') {
+      updates.lowAlpha = eegPower.lowAlpha;
+    }
+    if (typeof eegPower.highAlpha === 'number') {
+      updates.highAlpha = eegPower.highAlpha;
+    }
+    if (typeof eegPower.lowBeta === 'number') {
+      updates.lowBeta = eegPower.lowBeta;
+    }
+    if (typeof eegPower.highBeta === 'number') {
+      updates.highBeta = eegPower.highBeta;
+    }
+    if (typeof eegPower.lowGamma === 'number') {
+      updates.lowGamma = eegPower.lowGamma;
+    }
+    if (typeof eegPower.midGamma === 'number') {
+      updates.midGamma = eegPower.midGamma;
+    }
+    
+    // Dispatch all updates in one action
+    dispatch({
+      type: ACTION_TYPES.UPDATE_EEG_POWER,
+      payload: updates
+    });
+  }, [dispatch]);
 
   // 设置事件监听器
   const subscriptionsRef = useRef([]);
@@ -309,67 +317,9 @@ const Evaluate = forwardRef((props, ref) => {
         const neuroSkyEmitter = new NativeEventEmitter(NativeModules.NeuroSkyModule);
         const esp32Emitter = new NativeEventEmitter(NativeModules.ESP32Module);
 
-        // 添加事件监听器并保存到 ref 中
+        // Add event listeners and save to ref
         subscriptionsRef.current = [
-          neuroSkyEmitter.addListener('onEegPower', (eegPower) => {
-            // 更新所有脑电波频段数据
-            if (typeof eegPower.theta === 'number') {
-              dispatch({
-                type: ACTION_TYPES.UPDATE_THETA,
-                payload: { value: eegPower.theta }
-              });
-            }
-            
-            // 更新其他频段数据
-            if (typeof eegPower.delta === 'number') {
-              dispatch({
-                type: ACTION_TYPES.UPDATE_DELTA,
-                payload: { value: eegPower.delta }
-              });
-            }
-            
-            if (typeof eegPower.lowAlpha === 'number') {
-              dispatch({
-                type: ACTION_TYPES.UPDATE_LOW_ALPHA,
-                payload: { value: eegPower.lowAlpha }
-              });
-            }
-            
-            if (typeof eegPower.highAlpha === 'number') {
-              dispatch({
-                type: ACTION_TYPES.UPDATE_HIGH_ALPHA,
-                payload: { value: eegPower.highAlpha }
-              });
-            }
-            
-            if (typeof eegPower.lowBeta === 'number') {
-              dispatch({
-                type: ACTION_TYPES.UPDATE_LOW_BETA,
-                payload: { value: eegPower.lowBeta }
-              });
-            }
-            
-            if (typeof eegPower.highBeta === 'number') {
-              dispatch({
-                type: ACTION_TYPES.UPDATE_HIGH_BETA,
-                payload: { value: eegPower.highBeta }
-              });
-            }
-            
-            if (typeof eegPower.lowGamma === 'number') {
-              dispatch({
-                type: ACTION_TYPES.UPDATE_LOW_GAMMA,
-                payload: { value: eegPower.lowGamma }
-              });
-            }
-            
-            if (typeof eegPower.midGamma === 'number') {
-              dispatch({
-                type: ACTION_TYPES.UPDATE_MID_GAMMA,
-                payload: { value: eegPower.midGamma }
-              });
-            }
-          }),
+          neuroSkyEmitter.addListener('onEegPower', handleEEGPowerData),
           neuroSkyEmitter.addListener('onSignalChange', (event) => {
             const timestamp = Date.now();
             if (event.signal === 'ATTENTION') {
@@ -400,7 +350,7 @@ const Evaluate = forwardRef((props, ref) => {
     } catch (error) {
       console.error('设置事件监听器时发生错误:', error);
     }
-  }, [dispatch, handleESP32Data]);
+  }, [handleEEGPowerData, handleESP32Data]);
 
   // 计算维持值
   const calculateEndurance = useCallback(() => {
@@ -462,12 +412,6 @@ const Evaluate = forwardRef((props, ref) => {
     let stabilityScore = (1 - weightedLowRatio) * 100;
     stabilityScore = Math.max(1, Math.min(100, stabilityScore));
 
-    // console.log(`稳定度计算: 
-    //   专注低于40次数=${lowAttentionCount}/${totalAttentionCount} (${(lowAttentionRatio * 100).toFixed(1)}%), 
-    //   冥想低于40次数=${lowMeditationCount}/${totalMeditationCount} (${(lowMeditationRatio * 100).toFixed(1)}%), 
-    //   加权比例=${(weightedLowRatio * 100).toFixed(1)}%, 
-    //   最终分数=${Math.round(stabilityScore)}%`);
-
     return Math.round(stabilityScore);
   }, [gameState.attentionData, gameState.meditationData]);
 
@@ -496,8 +440,6 @@ const Evaluate = forwardRef((props, ref) => {
       const superPower = capScore(calculateBrainActivity());//脑活力（Brain Activity）
       const stability = capScore(calculateFocusAbility());//专注力（Focus Ability）
       const endurance = capScore(calculatePerceptionAbility());//感知力（Perception Ability）
-
-
       const score = calculateScore();
       const percentilePosition = calculatePercentilePosition();
       
@@ -596,12 +538,6 @@ const Evaluate = forwardRef((props, ref) => {
     const score = Math.min(100, Math.max(0, 
       50 + (Math.log(normalizedTheta) / Math.log(200)) * 50
     ));
-    
-    // console.log('超能力計算過程:', {
-    //   原始theta: theta,
-    //   標準化theta: normalizedTheta,
-    //   計算分數: score
-    // });
     
     return score;
   }, []);
@@ -1065,7 +1001,7 @@ const Evaluate = forwardRef((props, ref) => {
           />
         </View>
         {/* Bottom navigation */}
-        <View style={styles.footer}>
+        <View style={[styles.footer, { position: 'absolute', bottom: 10, width: '100%' }]}>
           <TouchableOpacity 
             style={styles.footerButton}
             onPress={() => navigation.navigate('Home')}>
