@@ -18,6 +18,7 @@ import { useNavigation, useIsFocused } from '@react-navigation/native';
 import Database from './utils/database';
 import { GAME_CONFIG } from './config/gameConfig';
 import PuzzleTest from './PuzzleTest';
+import { getLevel } from './utils/reportUtils';
 
 // 初始状态
 const initialState = {
@@ -358,7 +359,7 @@ const Evaluate = forwardRef((props, ref) => {
     const meditationData = gameState.meditationData || [];
 
     // 确保两个数据都存在且长度一致
-    if (attentionData.length === 0 || meditationData.length === 0) return 0;
+    if (attentionData.length === 0 || meditationData.length === 0) return 10;
 
     // 计算 ATTENTION 和 MEDITATION 的平均值
     const meanAttention = attentionData.reduce((sum, value) => sum + value, 0) / attentionData.length;
@@ -388,7 +389,7 @@ const Evaluate = forwardRef((props, ref) => {
     const meditationData = gameState.meditationData || [];
 
     // 如果没有数据，返回预设的中等稳定度 50
-    if (attentionData.length === 0 || meditationData.length === 0) return 50;
+    if (attentionData.length === 0 || meditationData.length === 0) return 10;
 
     // 计算低于40的次数
     const lowAttentionCount = attentionData.filter(value => value < 40).length;
@@ -425,8 +426,26 @@ const Evaluate = forwardRef((props, ref) => {
   // 处理结束游戏
   const handleEndGame = useCallback(async () => {
     try {
+      // 确保数据有效 - 先處理數據，確保後續計算正確
+      const validAttentionData = Array.isArray(gameState.attentionData) 
+        ? gameState.attentionData.map(v => Number(v) || 0)
+        : [0];
+      const validMeditationData = Array.isArray(gameState.meditationData)
+        ? gameState.meditationData.map(v => Number(v) || 0)
+        : [0];
+      const validSignalData = Array.isArray(gameState.signalData)
+        ? gameState.signalData.map(v => Number(v) || 0)
+        : [0];
       
-      const accuracy = calculateAccuracy();
+      // 確保腦電波頻段數據有效
+      const validThetaValues = Array.isArray(gameState.thetaValues) ? gameState.thetaValues.map(v => Number(v) || 0) : [0];
+      const validDeltaValues = Array.isArray(gameState.deltaValues) ? gameState.deltaValues.map(v => Number(v) || 0) : [0];
+      const validLowAlphaValues = Array.isArray(gameState.lowAlphaValues) ? gameState.lowAlphaValues.map(v => Number(v) || 0) : [0];
+      const validHighAlphaValues = Array.isArray(gameState.highAlphaValues) ? gameState.highAlphaValues.map(v => Number(v) || 0) : [0];
+      const validLowBetaValues = Array.isArray(gameState.lowBetaValues) ? gameState.lowBetaValues.map(v => Number(v) || 0) : [0];
+      const validHighBetaValues = Array.isArray(gameState.highBetaValues) ? gameState.highBetaValues.map(v => Number(v) || 0) : [0];
+      const validLowGammaValues = Array.isArray(gameState.lowGammaValues) ? gameState.lowGammaValues.map(v => Number(v) || 0) : [0];
+      const validMidGammaValues = Array.isArray(gameState.midGammaValues) ? gameState.midGammaValues.map(v => Number(v) || 0) : [0];
       
       // 确保分数不会达到100，如果是100分则随机给97-99分
       const capScore = (score) => {
@@ -436,6 +455,8 @@ const Evaluate = forwardRef((props, ref) => {
         return score;
       };
       
+      // 計算各項能力分數
+      const accuracy = capScore(calculateAccuracy());
       const brainPower = capScore(calculateCoordinationAbility());//协调力（Coordination Ability）
       const superPower = capScore(calculateBrainActivity());//脑活力（Brain Activity）
       const stability = capScore(calculateFocusAbility());//专注力（Focus Ability）
@@ -443,7 +464,9 @@ const Evaluate = forwardRef((props, ref) => {
       const score = calculateScore();
       const percentilePosition = calculatePercentilePosition();
       
-      gameData = {
+      // 準備完整的遊戲數據，包含所有腦電波數據
+      const gameData = {
+        // 基本遊戲數據
         throwCount: gameState.throwCount,
         successCount: gameState.successCount,
         accuracy,
@@ -454,10 +477,30 @@ const Evaluate = forwardRef((props, ref) => {
         score,
         percentilePosition,
         timestamp: new Date().toISOString(),
-        attentionHistory: validAttentionData,
-        meditationHistory: validMeditationData,
-        completionTime: timeCounter
+        completionTime: timeCounter,
+        
+        // 腦電波數據
+        attentionData: validAttentionData,
+        meditationData: validMeditationData,
+        signalData: validSignalData,
+        
+        // 腦電波頻段數據
+        thetaValues: validThetaValues,
+        deltaValues: validDeltaValues,
+        lowAlphaValues: validLowAlphaValues,
+        highAlphaValues: validHighAlphaValues,
+        lowBetaValues: validLowBetaValues,
+        highBetaValues: validHighBetaValues,
+        lowGammaValues: validLowGammaValues,
+        midGammaValues: validMidGammaValues,
+        
+        // 腦電波評估級別
+        coordinationLevel: getLevel(brainPower),
+        brainActivityLevel: getLevel(superPower),
+        focusLevel: getLevel(stability),
+        perceptionLevel: getLevel(endurance)
       };
+      
       // 存储游戏数据
       await Database.saveGameRecord(gameData);
       
@@ -466,16 +509,8 @@ const Evaluate = forwardRef((props, ref) => {
         subscriptionsRef.current.forEach(subscription => subscription.remove());
         subscriptionsRef.current = [];
       }
-      
-      // 确保数据有效
-      const validAttentionData = Array.isArray(gameState.attentionData) 
-        ? gameState.attentionData.map(v => Number(v) || 0)
-        : [0];
-      const validMeditationData = Array.isArray(gameState.meditationData)
-        ? gameState.meditationData.map(v => Number(v) || 0)
-        : [0];
 
-      console.log('游戏结束，完整数据:', gameData);
+      console.log('遊戲結束，完整數據:', gameData);
 
       // 导航到报告页面，使用正确的数据格式
       navigation.navigate('Report', {
@@ -486,22 +521,19 @@ const Evaluate = forwardRef((props, ref) => {
       resetData();
       
     } catch (error) {
-      console.error('结束游戏时发生错误:', error);
-      Alert.alert('错误', '存储游戏记录时发生错误');
+      console.error('結束遊戲時發生錯誤:', error);
+      Alert.alert('錯誤', '儲存遊戲記錄時發生錯誤');
     }
   }, [
     gameState,
     calculateAccuracy,
-    calculateBrainPower,
-    calculateSuperPower,
-    calculateEndurance,
-    calculateStability,
     calculateCoordinationAbility,
     calculateBrainActivity,
     calculateFocusAbility,
     calculatePerceptionAbility,
     calculateScore,
     calculatePercentilePosition,
+    timeCounter,
     navigation,
     resetData
   ]);
@@ -515,6 +547,7 @@ const Evaluate = forwardRef((props, ref) => {
   // 计算平均专注度
   const calculateAverageAttention = useCallback(() => {
     const values = gameState.attentionData;
+    console.log('calculateAverageAttention', values);
     if (values.length === 0) return 0;
     const sum = values.reduce((acc, val) => acc + val, 0);
     return Math.round(sum / values.length);
@@ -559,7 +592,7 @@ const Evaluate = forwardRef((props, ref) => {
 
   // 计算协调力 (Coordination Ability)
   const calculateCoordinationAbility = useCallback(() => {
-    if (!gameState.thetaValues || gameState.thetaValues.length === 0) return 50;
+    if (!gameState.thetaValues || gameState.thetaValues.length === 0) return 10;
     
     // 获取各脑电波频段数据
     const eegPower = {};
@@ -588,7 +621,7 @@ const Evaluate = forwardRef((props, ref) => {
     }
     
     // 如果没有足够的数据，返回默认值
-    if (normalizedValues.length < 2) return 50;
+    if (normalizedValues.length < 2) return 10;
     
     // 标准化数据
     const normalized = normalizeEegValues(normalizedValues);
@@ -617,7 +650,7 @@ const Evaluate = forwardRef((props, ref) => {
     // 如果没有数据，返回默认值
     if (lowBetaValues.length === 0 && highBetaValues.length === 0 && 
         lowGammaValues.length === 0 && midGammaValues.length === 0) {
-      return 50;
+      return 10;
     }
     
     // 计算各频段的平均值
@@ -638,7 +671,7 @@ const Evaluate = forwardRef((props, ref) => {
     if (avgMidGamma > 0) values.push(avgMidGamma);
     
     // 如果没有有效数据，返回默认值
-    if (values.length === 0) return 50;
+    if (values.length === 0) return 10;
     
     // 标准化数据
     const normalized = normalizeEegValues(values);
@@ -656,15 +689,15 @@ const Evaluate = forwardRef((props, ref) => {
     // 获取需要的频段数据
     const alphaValues = [...(gameState.lowAlphaValues || []), ...(gameState.highAlphaValues || [])];
     const betaValues = [...(gameState.lowBetaValues || []), ...(gameState.highBetaValues || [])];
-    
-    // 如果没有数据，使用 attentionData 作为替代
+    console.log('calculateFocusAbility====', alphaValues, betaValues);
+    // 如果没有数据，使用 attentionData 作为替代 #如果遇到沒有專注力 0 尚未處理
     if ((alphaValues.length === 0 || betaValues.length === 0) && gameState.attentionData && gameState.attentionData.length > 0) {
       return calculateAverageAttention();
     }
     
     // 如果仍然没有数据，返回默认值
     if (alphaValues.length === 0 || betaValues.length === 0) {
-      return 50;
+      return 10;
     }
     
     // 计算 Alpha 和 Beta 的平均值
@@ -678,7 +711,7 @@ const Evaluate = forwardRef((props, ref) => {
     
     // 计算专注力: [Beta / (Alpha + Beta)] × 100
     // 避免除以零
-    if (normalizedAlpha + normalizedBeta === 0) return 50;
+    if (normalizedAlpha + normalizedBeta === 0) return 10;
     
     const focusScore = (normalizedBeta / (normalizedAlpha + normalizedBeta)) * 100;
     
@@ -695,7 +728,7 @@ const Evaluate = forwardRef((props, ref) => {
     
     // 如果没有数据，返回默认值
     if (thetaValues.length === 0 && gammaValues.length === 0) {
-      return 50;
+      return 30;
     }
     
     // 计算 Theta 和 Gamma 的平均值
@@ -723,7 +756,7 @@ const Evaluate = forwardRef((props, ref) => {
   const calculateSuperPower = useCallback(() => {
     if (!gameState.thetaValues || gameState.thetaValues.length === 0) {
       console.log('没有 Theta 数据，返回预设值');
-      return 50; // 返回一个预设值而不是0
+      return 10; // 返回一个预设值而不是0
     }
 
     // 过滤掉异常值
@@ -744,7 +777,7 @@ const Evaluate = forwardRef((props, ref) => {
 
     if (validThetaValues.length === 0) {
       console.log('没有有效的 Theta 数据，返回预设值');
-      return 50;
+      return 10;
     }
 
     const sumTheta = validThetaValues.reduce((acc, val) => acc + val, 0);
@@ -884,7 +917,7 @@ const Evaluate = forwardRef((props, ref) => {
       const sideIndex = Math.floor(index / piecesPerSide);
       
       let x, y;
-      const spreadRange = PIECE_SIZE * 0.8; // 散布范围
+      const spreadRange = PIECE_SIZE * 0.6; // 散布范围
       
       switch(sideIndex) {
         case 0: // 上方
@@ -988,6 +1021,9 @@ const Evaluate = forwardRef((props, ref) => {
       source={require('../assets/img/background.png')}
       style={styles.background}
     >
+      <View style={styles.titleContainer}>
+        <Text style={styles.titleText}>拼图游戏</Text>
+      </View>
       <View style={styles.container}>
         {/* End game button */}
         <View style={styles.pizzleGameZone}>
@@ -1064,6 +1100,18 @@ const Evaluate = forwardRef((props, ref) => {
 });
 
 const styles = StyleSheet.create({
+  titleContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  titleText: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#1D417D',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: {width: -1, height: 1},
+    textShadowRadius: 10,
+  },
   completionContainer: {
     padding: 20,
     alignItems: 'center',
@@ -1100,14 +1148,6 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     paddingVertical: 20,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#d4373d',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: {width: -1, height: 1},
-    textShadowRadius: 10,
   },
   chartContainer: {
     alignItems: 'center',

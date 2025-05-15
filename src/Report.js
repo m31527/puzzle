@@ -46,7 +46,7 @@ const Report = () => {
   }, [isFocused]);
 
   useEffect(() => {
-    //console.log('Report received params:', route.params);
+    console.log('Report received params:', route.params);
     
     // 检查数据来源并设置数据
     if (route.params) {
@@ -185,6 +185,7 @@ const Report = () => {
   // 绘制数据区域
   const renderDataArea = () => {
     const values = [superPower, brainPower, stability, endurance];
+    console.log('values', values);
     const numPoints = 4;
     const angleStep = (2 * Math.PI) / numPoints;
     let pathD = '';
@@ -312,38 +313,7 @@ const Report = () => {
     );
   };
 
-  // 生成 PDF 并打开查看
-  const handleDownload = async (htmlContent, fileName) => {
-    try {
-      console.log('开始生成 PDF...');
-      
-      // 生成 PDF 文件
-      const options = {
-        html: htmlContent,
-        fileName: fileName || `脑电波报告_${new Date().getTime()}`,
-        directory: 'Documents',
-        orientation: 'landscape', // Ensure A4 landscape
-        pageSize: 'A4', // Ensure it's A4
-      };
-      console.log('---RNHTMLtoPDF:', RNHTMLtoPDF);
-      const file = await RNHTMLtoPDF.convert(options);
-      console.log('生成的PDF文件路径:', file.filePath);
-      
-      // 导航到 PDFView 页面查看 PDF
-      navigation.navigate('PDFView', { pdfPath: file.filePath });
-      
-      // 显示成功提示
-      if (Platform.OS === 'android') {
-        ToastAndroid.show('报告生成成功', ToastAndroid.SHORT);
-      }
-      
-      return file.filePath;
-    } catch (error) {
-      console.error('生成PDF时发生错误:', error);
-      Alert.alert('错误', `生成PDF时发生错误: ${error.message || error}`);
-      return null;
-    }
-  };
+  
 
   return (
     <ImageBackground
@@ -351,7 +321,7 @@ const Report = () => {
       style={styles.background}
     >
       <View style={styles.titleContainer}>
-        <Text style={styles.titleText}>拼图游戏</Text>
+        <Text style={styles.titleText}>拼图游戏分析</Text>
       </View>
       
       <View style={styles.contentContainer}>
@@ -376,7 +346,6 @@ const Report = () => {
             
             try {
               // 显示变化提示
-              Alert.alert('提示', '正在生成报告...');
               
               // 获取各项能力的评估级别
               const coordinationLevel = getLevel(brainPower);
@@ -390,125 +359,26 @@ const Report = () => {
               const focusAssessment = getFocusAbilityAssessment(focusLevel);
               const perceptionAssessment = getPerceptionAbilityAssessment(perceptionLevel);
               
-              // 创建 HTML 报告内容
-              const htmlContent = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                  <meta charset="utf-8">
-                  <title>脑电波分析报告</title>
-                  <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; }
-                    h1 { color: #4CAF50; text-align: center; }
-                    h2 { color: #2196F3; margin-top: 20px; }
-                    .info { background-color: #f5f5f5; padding: 10px; border-radius: 5px; }
-                    .level { font-weight: bold; color: #FF5722; }
-                    .features { margin-left: 20px; }
-                    .suggestions { margin-left: 20px; }
-                    .feature-item, .suggestion-item { margin-bottom: 5px; }
-                  </style>
-                </head>
-                <body>
-                  <h1>脑电波指标等级评估报告</h1>
-                  
-                  <div class="info">
-                    <p><strong>姓名：</strong>${userName}</p>
-                    <p><strong>完成时间：</strong>${completionTime} 秒</p>
-                    <p><strong>报告生成时间：</strong>${new Date().toLocaleString()}</p>
-                  </div>
-                  
-                  <h2>★ 协调力：<span class="level">${coordinationLevel}级 - ${coordinationAssessment.title}</span></h2>
-                  <p>${coordinationAssessment.description}</p>
-                  
-                  <p><strong>表现特征：</strong></p>
-                  <ul class="features">
-                    ${coordinationAssessment.features.map(feature => `<li class="feature-item">${feature}</li>`).join('')}
-                  </ul>
-                  
-                  <p><strong>建议：</strong></p>
-                  <ul class="suggestions">
-                    ${coordinationAssessment.suggestions.map(suggestion => `<li class="suggestion-item">${suggestion}</li>`).join('')}
-                  </ul>
-                  
-                  <h2>★ 脑活力：<span class="level">${brainActivityLevel}级 - ${brainActivityAssessment.title}</span></h2>
-                  <p>${brainActivityAssessment.description}</p>
-                  
-                  <p><strong>表现特征：</strong></p>
-                  <ul class="features">
-                    ${brainActivityAssessment.features.map(feature => `<li class="feature-item">${feature}</li>`).join('')}
-                  </ul>
-                  
-                  <p><strong>建议：</strong></p>
-                  <ul class="suggestions">
-                    ${brainActivityAssessment.suggestions.map(suggestion => `<li class="suggestion-item">${suggestion}</li>`).join('')}
-                  </ul>
-                  
-                  <h2>★ 专注力：<span class="level">${focusLevel}级 - ${focusAssessment.title}</span></h2>
-                  <p>${focusAssessment.description}</p>
-                  
-                  <p><strong>表现特征：</strong></p>
-                  <ul class="features">
-                    ${focusAssessment.features.map(feature => `<li class="feature-item">${feature}</li>`).join('')}
-                  </ul>
-                  
-                  <p><strong>建议：</strong></p>
-                  <ul class="suggestions">
-                    ${focusAssessment.suggestions.map(suggestion => `<li class="suggestion-item">${suggestion}</li>`).join('')}
-                  </ul>
-                  
-                  <h2>★ 感知力：<span class="level">${perceptionLevel}级 - ${perceptionAssessment.title}</span></h2>
-                  <p>${perceptionAssessment.description}</p>
-                  
-                  <p><strong>表现特征：</strong></p>
-                  <ul class="features">
-                    ${perceptionAssessment.features.map(feature => `<li class="feature-item">${feature}</li>`).join('')}
-                  </ul>
-                  
-                  <p><strong>建议：</strong></p>
-                  <ul class="suggestions">
-                    ${perceptionAssessment.suggestions.map(suggestion => `<li class="suggestion-item">${suggestion}</li>`).join('')}
-                  </ul>
-
-                  <h2>综合评估</h2>
-                  <p>通过对四项指标的综合评估，我们可以了解个体的脑功能特点和潜力所在。这些指标不仅可以作为个人能力的参考，还可以指导有针对性的训练和发展计划。</p>
-                  
-                  <table border="1" cellpadding="5" cellspacing="0" style="width: 100%; border-collapse: collapse;">
-                    <tr>
-                      <th>等级组合</th>
-                      <th>特点描述</th>
-                      <th>发展建议</th>
-                    </tr>
-                    <tr>
-                      <td>全部为1级</td>
-                      <td>脑功能处于基础发展阶段，有较大提升空间</td>
-                      <td>从基础训练开始，全面提升各项能力</td>
-                    </tr>
-                    <tr>
-                      <td>1-2级为主</td>
-                      <td>脑功能发展不均衡，具备一定基础</td>
-                      <td>重点提升薄弱项，适度发展优势项</td>
-                    </tr>
-                    <tr>
-                      <td>2-3级为主</td>
-                      <td>脑功能发展良好，部分领域表现突出</td>
-                      <td>平衡发展各项能力，强化特长</td>
-                    </tr>
-                    <tr>
-                      <td>3-4级为主</td>
-                      <td>脑功能发展优异，具备综合优势</td>
-                      <td>挑战极限，发掘特殊才能</td>
-                    </tr>
-                  </table>
-
-                  <p>每个人的脑功能特点和发展潜力各不相同，本评估报告旨在提供参考和指导，而非绝对评判。通过有针对性的训练和发展，每个人都能够提升自己的脑功能水平，发挥更大潜力。</p>
-                </body>
-                </html>
-              `;
+              
               
               try {
-                // 使用 handleDownload 函数生成 PDF
-                const fileName = `脑电波报告_${userName}_${new Date().getTime()}`;
-                await handleDownload(htmlContent, fileName);
+                // 提示用戶查看詳細報告
+                Alert.alert(
+                  '報告生成成功',
+                  '要查看詳細報告嗎？',
+                  [
+                    {
+                      text: '取消',
+                      style: 'cancel',
+                    },
+                    {
+                      text: '確認',
+                      onPress: () => {
+                        navigation.navigate('NewReport', { reportData });
+                      },
+                    },
+                  ]
+                );
               } catch (error) {
                 console.log('RNHTMLtoPDF 不可用，使用备用方案...', error);
                 // 备用方案：显示报告内容
