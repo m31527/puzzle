@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Image,
@@ -8,8 +8,13 @@ import {
   Animated,
   Dimensions,
   Text,
+  ImageBackground,
+  TouchableOpacity,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
+import Database from './utils/database';
 
 // 預先導入所有拼圖圖片
 const puzzleImages = {
@@ -42,10 +47,16 @@ const screenHeight = Dimensions.get('window').height;
 const GRID_OFFSET_X = (screenWidth - GRID_SIZE) / 4; // 水平對齊
 const GRID_OFFSET_Y = 50; // 垂直位置
 
-const PuzzleTest = ({ gameData, completed: parentCompleted, handleAutoComplete, handlePiecePress, pieces: parentPieces, navigation, setIsPuzzleActive }) => {
+const PuzzleGame = ({ gameData, completed: parentCompleted, handlePiecePress, pieces: parentPieces }) => {
+  const navigation = useNavigation();
   const [pieces, setPieces] = useState(parentPieces || []);
   const [completed, setCompleted] = useState(parentCompleted || new Array(TOTAL_PIECES).fill(false));
   const [completedCount, setCompletedCount] = useState(0);
+  const [timeCounter, setTimeCounter] = useState(0);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState('加载中...');
+  const subscriptionsRef = useRef([]);
 
   // 重置遊戲狀態
   const resetGame = () => {
@@ -116,7 +127,8 @@ const PuzzleTest = ({ gameData, completed: parentCompleted, handleAutoComplete, 
     setPieces(initialPieces);
   };
 
-  const completeAllPieces = () => {
+  // 自動完成所有拼圖
+  const handleAutoComplete = useCallback(() => {
     const newPieces = [...pieces];
     newPieces.forEach(piece => {
       const correctPos = correctPositions[piece.id];
@@ -126,7 +138,11 @@ const PuzzleTest = ({ gameData, completed: parentCompleted, handleAutoComplete, 
     setPieces(newPieces);
     setCompleted(new Array(TOTAL_PIECES).fill(true));
     setCompletedCount(TOTAL_PIECES);
-    handleAutoComplete(); // 調用從 props 傳入的 handleAutoComplete
+    setShowCompletionModal(true);
+  }, [pieces, correctPositions]);
+  
+  const completeAllPieces = () => {
+    handleAutoComplete();
   };
 
   const correctPositions = {
@@ -151,6 +167,46 @@ const PuzzleTest = ({ gameData, completed: parentCompleted, handleAutoComplete, 
   const getCorrectPosition = (index) => {
     return correctPositions[index];
   };
+
+  // 处理游戏结束
+  const handleEndGame = async () => {
+    setIsLoading(true);
+    setLoadingText('正在生成报告...');
+    
+    try {
+      // 这里可以添加游戏结束时的数据处理逻辑
+      const gameData = {
+        date: new Date().toISOString(),
+        duration: timeCounter,
+        completed: completed.every(isComplete => isComplete),
+        // 可以添加其他游戏数据
+      };
+      
+      // 保存游戏记录
+      await Database.saveGameRecord(gameData);
+      
+      // 导航到报告页面
+      navigation.navigate('Report', {
+        gameData: gameData
+      });
+    } catch (error) {
+      console.error('保存游戏记录失败:', error);
+      Alert.alert('错误', '保存游戏记录失败');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // // 初始化計時器
+  // useEffect(() => {
+  //   const timer = setInterval(() => {
+  //     setTimeCounter(prev => prev + 1);
+  //   }, 1000);
+
+  //   return () => {
+  //     clearInterval(timer);
+  //   };
+  // }, []);
 
   // 初始化拼圖位置
   useEffect(() => {
@@ -231,22 +287,20 @@ const PuzzleTest = ({ gameData, completed: parentCompleted, handleAutoComplete, 
     return PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
-        // 在拼圖拖動開始時暫停腦電波數據處理
-        if (setIsPuzzleActive) {
-          setIsPuzzleActive(true);
-          console.log('拼圖拖動開始，暫停腦電波數據處理');
-        }
-        
         pieces[index].pan.setOffset({
           x: pieces[index].pan.x._value,
           y: pieces[index].pan.y._value,
         });
         pieces[index].pan.setValue({ x: 0, y: 0 });
       },
-      onPanResponderMove: Animated.event(
-        [null, { dx: pieces[index].pan.x, dy: pieces[index].pan.y }],
-        { useNativeDriver: false }
-      ),
+      // 修改拖动处理方式，直接设置值而不使用 Animated.event
+      onPanResponderMove: (evt, gestureState) => {
+        // 直接设置值，避免在嵌套组件中使用 Animated.event 导致的冲突
+        pieces[index].pan.setValue({
+          x: gestureState.dx,
+          y: gestureState.dy
+        });
+      },
       onPanResponderRelease: (e, gesture) => {
         pieces[index].pan.flattenOffset();
         
@@ -294,49 +348,151 @@ const PuzzleTest = ({ gameData, completed: parentCompleted, handleAutoComplete, 
       },
     });
   };
+  
 
   return (
-    <View style={styles.container}>
-      {/* 進度提示 */}
-      <View style={styles.progressContainer}>
-        <Text style={styles.progressText}>{completedCount}/{TOTAL_PIECES}</Text>
-        <Text onPress={handleAutoComplete} style={styles.autoCompleteButton}>
-          停止
-        </Text>
+    <ImageBackground
+      source={require('../assets/img/background.png')}
+      style={styles.background}
+    >
+      <View style={styles.titleContainer}>
+        <Text style={styles.titleText}>拼图游戏</Text>
+      </View>
+      <View style={styles.container}>
+        {/* 游戏区域 */}
+        <View style={styles.puzzleGameZone}>
+          <View style={styles.puzzleContainer}>
+            {/* 進度提示 */}
+            <View style={styles.progressContainer}>
+              <Text style={styles.progressText}>{completedCount}/{TOTAL_PIECES}</Text>
+              <Text onPress={handleAutoComplete} style={styles.autoCompleteButton}>
+                停止
+              </Text>
+            </View>
+
+            {/* 背景圖 */}
+            <Image
+              source={require('../assets/img/puzzle/puzzle_map.png')}
+              style={styles.backgroundImage}
+            />
+            
+            {/* 拼圖片 */}
+            {pieces.map((piece, index) => (
+              <Animated.View
+                key={piece.id}
+                style={[
+                  styles.piece,
+                  {
+                    transform: piece.pan.getTranslateTransform(),
+                    left: piece.position.x,
+                    top: piece.position.y,
+                  },
+                ]}
+                {...createPanResponder(index).panHandlers}
+              >
+                <Image
+                  source={puzzleImages[piece.id]}
+                  style={[styles.pieceImage, piece.id === 10 && { width: PIECE_SIZE, height: PIECE_SIZE }]}
+                  resizeMode="contain"
+                />
+              </Animated.View>
+            ))}
+          </View>
+        </View>
+
+        {/* 底部导航 */}
+        <View style={[styles.footer, { position: 'absolute', bottom: 10, width: '100%' }]}>
+          <TouchableOpacity 
+            style={styles.footerButton}
+            onPress={() => navigation.navigate('Home')}>
+            <ImageBackground
+              source={require('../assets/img/btn.png')}
+              style={styles.buttonBackground}
+              resizeMode="stretch"
+            >
+              <Text style={styles.footerButtonText}>回首页</Text>
+            </ImageBackground>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.footerButton}
+            onPress={() => navigation.navigate('History')}>
+            <ImageBackground
+              source={require('../assets/img/btn.png')}
+              style={styles.buttonBackground}
+              resizeMode="stretch"
+            >
+              <Text style={styles.footerButtonText}>历史记录</Text>
+            </ImageBackground>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* 背景圖 */}
-      <Image
-        source={require('../assets/img/puzzle/puzzle_map.png')}
-        style={styles.backgroundImage}
-      />
-      
-      {/* 拼圖片 */}
-      {pieces.map((piece, index) => (
-        <Animated.View
-          key={piece.id}
-          style={[
-            styles.piece,
-            {
-              transform: piece.pan.getTranslateTransform(),
-              left: piece.position.x,
-              top: piece.position.y,
-            },
-          ]}
-          {...createPanResponder(index).panHandlers}
-        >
-          <Image
-            source={puzzleImages[piece.id]}
-            style={[styles.pieceImage, piece.id === 10 && { width: PIECE_SIZE, height: PIECE_SIZE }]}
-            resizeMode="contain"
-          />
-        </Animated.View>
-      ))}
-    </View>
+      {/* Completion Modal */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={showCompletionModal}>
+        <View style={styles.modalBackground}>
+          <View style={[styles.loadingContainer, styles.completionContainer]}>
+            <Text style={styles.completionText}>恭喜完成拼图！</Text>
+            <TouchableOpacity
+              style={styles.reportButton}
+              onPress={() => {
+                handleEndGame();
+                setShowCompletionModal(false);
+              }}>
+              <Text style={styles.reportButtonText}>查看报告</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Loading Modal */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={isLoading}>
+        <View style={styles.modalBackground}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#2196F3" />
+            <Text style={styles.loadingText}>{loadingText}</Text>
+          </View>
+        </View>
+      </Modal>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
+  titleContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  titleText: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#1D417D',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: {width: -1, height: 1},
+    textShadowRadius: 10,
+  },
+  background: {
+    flex: 1,
+    resizeMode: 'cover',
+  },
+  container: {
+    flex: 1,
+  },
+  puzzleGameZone: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  puzzleContainer: {
+    width: screenWidth,
+    height: screenHeight - 200,
+    position: 'relative',
+  },
   progressContainer: {
     position: 'absolute',
     top: 10,
@@ -361,10 +517,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginTop: 10,
     overflow: 'hidden',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF5F5',
+    textAlign: 'center',
   },
   backgroundImage: {
     width: GRID_SIZE,
@@ -387,6 +540,68 @@ const styles = StyleSheet.create({
     height: PIECE_SIZE * 0.85,
     resizeMode: 'contain',
   },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  footerButton: {
+    width: 120,
+    height: 50,
+  },
+  buttonBackground: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  footerButtonText: {
+    color: '#1D417D',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingContainer: {
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    minWidth: 200,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#333333',
+  },
+  completionContainer: {
+    padding: 20,
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 10,
+  },
+  completionText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
+  },
+  reportButton: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 30,
+    paddingVertical: 10,
+    borderRadius: 5,
+  },
+  reportButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
 });
 
-export default PuzzleTest;
+export default PuzzleGame;

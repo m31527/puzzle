@@ -235,11 +235,12 @@ const Evaluate = forwardRef((props, ref) => {
   const isFocused = useIsFocused();
   const [gameState, dispatch] = useReducer(gameDataReducer, initialState);
   const [timeCounter, setTimeCounter] = useState(0);
-  const [isPuzzleActive, setIsPuzzleActive] = useState(false); // 控制拼圖活動狀態，初始值為 false 以允許收集數據
+  const [pageEnterTime] = useState(Date.now()); // 记录进入页面的时间
+  const [isPuzzleActive, setIsPuzzleActive] = useState(false); // 控制拼图活动状态，初始值为 false 以允许收集数据
   const [isLoading, setIsLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false); // 控制處理動畫狀態
-  const [processingProgress, setProcessingProgress] = useState(0); // 處理進度
+  const [isProcessing, setIsProcessing] = useState(false); // 控制处理动画状态
+  const [processingProgress, setProcessingProgress] = useState(0); // 处理进度
 
   // 处理 ESP32 数据
   const handleESP32Data = useCallback((event) => {
@@ -298,11 +299,11 @@ const Evaluate = forwardRef((props, ref) => {
     });
   }, [dispatch]);
 
-  // 设置事件监听器 - 根據拼圖狀態控制
+  // 设置事件监听器 - 根据拼图状态控制
   const subscriptionsRef = useRef([]);
   useEffect(() => {
     if (isFocused && !isPuzzleActive) {
-      // 只有在頁面有焦點且拼圖不活動時才處理腦電波數據
+      // 只有在页面有焦点且拼图不活动时才处理脑电波数据
       console.log('Evaluate 页面获得焦点且拼图未激活，开始数据处理');
       setupEventListeners();
     } else {
@@ -481,7 +482,7 @@ const Evaluate = forwardRef((props, ref) => {
         score,
         percentilePosition,
         timestamp: new Date().toISOString(),
-        completionTime: timeCounter,
+        completionTime: Math.floor((Date.now() - pageEnterTime) / 1000), // 计算从进入页面到当前的总秒数
         
         // 腦電波數據
         attentionData: validAttentionData,
@@ -691,38 +692,53 @@ const Evaluate = forwardRef((props, ref) => {
   // 计算专注力 (Focus Ability)
   const calculateFocusAbility = useCallback(() => {
     // 获取需要的频段数据
-    const alphaValues = [...(gameState.lowAlphaValues || []), ...(gameState.highAlphaValues || [])];
-    const betaValues = [...(gameState.lowBetaValues || []), ...(gameState.highBetaValues || [])];
-    console.log('calculateFocusAbility====', alphaValues, betaValues);
-    // 如果没有数据，使用 attentionData 作为替代 #如果遇到沒有專注力 0 尚未處理
+    let alphaValues = [...(gameState.lowAlphaValues || []), ...(gameState.highAlphaValues || [])];
+    let betaValues = [...(gameState.lowBetaValues || []), ...(gameState.highBetaValues || [])];
+    
+    // 过滤异常值 - 移除过大的值（可能是数据错误）
+    const MAX_REASONABLE_VALUE = 1000000; // 设置一个合理的上限值
+    alphaValues = alphaValues.filter(val => val < MAX_REASONABLE_VALUE && val >= 0);
+    betaValues = betaValues.filter(val => val < MAX_REASONABLE_VALUE && val >= 0);
+    
+    console.log('calculateFocusAbility after filtering====', alphaValues, betaValues);
+    
+    // 如果没有有效数据，使用 attentionData 作为替代
     if ((alphaValues.length === 0 || betaValues.length === 0) && gameState.attentionData && gameState.attentionData.length > 0) {
-      return calculateAverageAttention();
+      const attentionScore = calculateAverageAttention();
+      console.log('Using attention score as fallback:', attentionScore);
+      return attentionScore;
     }
     
     // 如果仍然没有数据，返回默认值
     if (alphaValues.length === 0 || betaValues.length === 0) {
-      return 10;
+      console.log('No valid alpha/beta data, returning default value');
+      return 50; // 返回一个更合理的默认值
     }
     
     // 计算 Alpha 和 Beta 的平均值
     const avgAlpha = alphaValues.reduce((sum, val) => sum + val, 0) / alphaValues.length;
     const avgBeta = betaValues.reduce((sum, val) => sum + val, 0) / betaValues.length;
     
-    // 标准化数据
-    const normalizedValues = normalizeEegValues([avgAlpha, avgBeta]);
-    const normalizedAlpha = normalizedValues[0];
-    const normalizedBeta = normalizedValues[1];
+    console.log('Average values:', { avgAlpha, avgBeta });
+    
+    // 直接计算比率，避免标准化导致的问题
+    // 避免除以零
+    if (avgAlpha + avgBeta === 0) {
+      console.log('Sum is zero, returning default value');
+      return 50;
+    }
     
     // 计算专注力: [Beta / (Alpha + Beta)] × 100
-    // 避免除以零
-    if (normalizedAlpha + normalizedBeta === 0) return 10;
+    const focusScore = (avgBeta / (avgAlpha + avgBeta)) * 100;
+    console.log('Calculated focus score:', focusScore);
     
-    const focusScore = (normalizedBeta / (normalizedAlpha + normalizedBeta)) * 100;
+    // 确保分数在 1-100 范围内
+    const finalScore = Math.max(1, Math.min(100, Math.round(focusScore)));
+    console.log('Final focus score (stability):', finalScore);
     
-    // 确保分数在 0-100 范围内
-    return Math.max(0, Math.min(100, Math.round(focusScore)));
+    return finalScore;
   }, [gameState.lowAlphaValues, gameState.highAlphaValues, gameState.lowBetaValues, gameState.highBetaValues, 
-      gameState.attentionData, calculateAverageAttention, normalizeEegValues]);
+      gameState.attentionData, calculateAverageAttention]);
 
   // 计算感知力 (Perception Ability)
   const calculatePerceptionAbility = useCallback(() => {
@@ -1069,46 +1085,78 @@ const Evaluate = forwardRef((props, ref) => {
             <Text style={styles.completionText}>恭喜完成拼图！</Text>
             {isProcessing ? (
               <View style={styles.processingContainer}>
-                <Text style={styles.processingText}>請專心等待腦波數據處理...</Text>
+                <Text style={styles.processingText}>请专心等待脑波数据处理...</Text>
                 <Text style={styles.processingSubText}>{loadingText}</Text>
-                <View style={styles.progressBarContainer}>
-                  <View style={[styles.progressBar, { width: `${processingProgress}%` }]} />
+                
+                {/* 进度条动画 - 分段式设计 */}
+                <View style={styles.progressBarOuterContainer}>
+                  <View style={styles.progressBarContainer}>
+                    {/* 创建8个分段 */}
+                    {[...Array(8)].map((_, index) => {
+                      // 计算每个分段应该的进度百分比
+                      const segmentProgress = (index + 1) * 12.5;
+                      // 判断当前分段是否应该显示
+                      const isActive = processingProgress >= segmentProgress;
+                      // 最后一个分段的样式稍微不同
+                      const isLastSegment = index === 7;
+                      
+                      return (
+                        <View 
+                          key={index} 
+                          style={[
+                            styles.progressSegment,
+                            isActive ? styles.progressSegmentActive : {},
+                            isLastSegment ? styles.progressSegmentLast : {}
+                          ]}
+                        />
+                      );
+                    })}
+                  </View>
                 </View>
-                <Text style={styles.processingCountdown}>{Math.ceil((100 - processingProgress) / 10)}秒</Text>
+                
+                {/* 进度标签 */}
+                <View style={styles.progressLabels}>
+                  <Text style={[styles.progressLabel, processingProgress >= 25 ? styles.progressLabelActive : {}]}>25%</Text>
+                  <Text style={[styles.progressLabel, processingProgress >= 50 ? styles.progressLabelActive : {}]}>50%</Text>
+                  <Text style={[styles.progressLabel, processingProgress >= 75 ? styles.progressLabelActive : {}]}>75%</Text>
+                  <Text style={[styles.progressLabel, processingProgress >= 100 ? styles.progressLabelActive : {}]}>100%</Text>
+                </View>
+                
+                <Text style={styles.processingCountdown}>剩余 {Math.ceil((100 - processingProgress) / 10)} 秒</Text>
               </View>
             ) : (
               <TouchableOpacity
                 style={styles.reportButton}
                 onPress={() => {
-                  // 開始處理動畫
+                  // 开始处理动画
                   setIsProcessing(true);
-                  setIsPuzzleActive(false); // 恢復腦波數據處理
+                  setIsPuzzleActive(false); // 恢复脑波数据处理
                   
-                  // 設置進度條動畫 - 增加時間確保收集足夠數據
+                  // 设置进度条动画 - 增加时间确保收集足够数据
                   let progress = 0;
-                  // 每200ms增加2%，10秒完成，給予更多時間收集腦電波數據
+                  // 每200ms增加2%，10秒完成，给予更多时间收集脑电波数据
                   const interval = setInterval(() => {
                     progress += 2; 
                     setProcessingProgress(progress);
                     
                     // 更新提示文字
                     if (progress < 30) {
-                      // 前30%時間收集注意力數據
-                      setLoadingText('正在收集腦波注意力數據...');
+                      // 前30%时间收集注意力数据
+                      setLoadingText('正在整理脑波注意力数据...');
                     } else if (progress < 60) {
-                      // 30-60%時間收集協調力數據
-                      setLoadingText('正在收集腦波協調力數據...');
+                      // 30-60%时间收集协调力数据
+                      setLoadingText('正在整理脑波协调力数据...');
                     } else if (progress < 90) {
-                      // 60-90%時間收集感知力數據
-                      setLoadingText('正在收集腦波感知力數據...');
+                      // 60-90%时间收集感知力数据
+                      setLoadingText('正在整理脑波感知力数据...');
                     } else {
-                      // 最後10%時間處理數據
-                      setLoadingText('正在處理腦波數據...');
+                      // 最后10%时间处理数据
+                      setLoadingText('正在整理脑波数据...');
                     }
                     
                     if (progress >= 100) {
                       clearInterval(interval);
-                      // 動畫完成後處理數據並關閉modal
+                      // 动画完成后处理数据并关闭modal
                       handleEndGame();
                       setShowCompletionModal(false);
                       setIsProcessing(false);
@@ -1163,21 +1211,56 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: 'bold',
   },
-  progressBarContainer: {
-    width: '80%',
-    height: 10,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 5,
-    overflow: 'hidden',
+  progressBarOuterContainer: {
+    width: '90%',
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: 'white',
+    marginVertical: 15,
   },
-  progressBar: {
-    height: '100%',
-    backgroundColor: '#4CAF50',
+  progressBarContainer: {
+    width: '100%',
+    height: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  progressSegment: {
+    width: '11%', // 留出一点间隔
+    height: 30,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#2196F3',
+    marginHorizontal: 1,
+  },
+  progressSegmentActive: {
+    backgroundColor: '#4A90E2',
+  },
+  progressSegmentLast: {
+    width: '13%', // 最后一个分段稍微宽一点
+  },
+  progressLabels: {
+    width: '90%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 5,
+    marginBottom: 10,
+  },
+  progressLabel: {
+    fontSize: 12,
+    color: '#888',
+    fontWeight: 'bold',
+  },
+  progressLabelActive: {
+    color: '#4A90E2',
+    fontSize: 14,
   },
   processingCountdown: {
     fontSize: 16,
-    color: '#555',
-    marginTop: 10,
+    color: '#4A90E2',
+    marginTop: 15,
     fontWeight: 'bold',
   },
   titleText: {

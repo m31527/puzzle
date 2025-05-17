@@ -14,7 +14,6 @@ import {
   Linking,
   Image
 } from 'react-native';
-import RNHTMLtoPDF from 'react-native-html-to-pdf';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import Svg, { Circle, Line, Text as SvgText, Path, G } from 'react-native-svg';
 import { GAME_CONFIG } from './config/gameConfig';

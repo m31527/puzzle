@@ -6,6 +6,7 @@ import Home from './src/Home';
 import Evaluate from './src/Evaluate';
 import Report from './src/Report';
 import History from './src/History';
+import PuzzleGame from './src/PuzzleGame';
 import PuzzleTest from './src/PuzzleTest';
 import NewReport from './src/NewReport';
 import PDFView from './src/PDFView';
@@ -38,8 +39,8 @@ const App = () => {
           options={{ headerShown: false }}
         />
         <Stack.Screen 
-          name="PuzzleTest" 
-          component={PuzzleTest}
+          name="PuzzleGame" 
+          component={PuzzleGame}
           options={{ headerShown: false }}
         />
         <Stack.Screen 
@@ -50,6 +51,11 @@ const App = () => {
         <Stack.Screen 
           name="PDFView" 
           component={PDFView}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="PuzzleTest" 
+          component={PuzzleTest}
           options={{ headerShown: false }}
         />
         </Stack.Navigator>
