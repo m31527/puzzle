@@ -19,12 +19,14 @@ import Svg, { Circle, Line, Text as SvgText, Path, G } from 'react-native-svg';
 import { GAME_CONFIG } from './config/gameConfig';
 import { useAppState } from './context/AppStateContext';
 import { getLevel, getCoordinationAssessment, getBrainActivityAssessment, getFocusAbilityAssessment, getPerceptionAbilityAssessment } from './utils/reportUtils';
+import { useLanguage } from './i18n/LanguageContext';
 
 const Report = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { pauseProcessing, resumeProcessing } = useAppState();
   const isFocused = useIsFocused();
+  const { t } = useLanguage(); // 使用語言上下文
   
   // 确保从不同来源进入时都能正确获取数据
   const [reportData, setReportData] = useState(null);
@@ -66,7 +68,7 @@ const Report = () => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#FFFFFF" />
-        <Text style={styles.loadingText}>加载中...</Text>
+        <Text style={styles.loadingText}>{t('loading')}</Text>
       </View>
     );
   }
@@ -144,7 +146,7 @@ const Report = () => {
     const axes = [];
     const numAxes = 4;
     const angleStep = (2 * Math.PI) / numAxes;
-    const labels = ['协调力', '脑活力', '专注力', '感知力'];
+    const labels = [t('coordination'), t('brainActivity'), t('focusAbility'), t('perception')];
     const labelOffset = 25;
 
     for (let i = 0; i < numAxes; i++) {
@@ -263,15 +265,15 @@ const Report = () => {
   const showBrainActivityReport = (level) => {
     const assessment = getBrainActivityAssessment(level);
     Alert.alert(
-      `脑活力: ${level}级 - ${assessment.title}`,
+      t('brainActivityTitle').replace('{level}', level).replace('{title}', assessment.title),
       assessment.description,
       [
         { 
-          text: '查看专注力', 
+          text: t('viewFocusAbility'), 
           onPress: () => showFocusReport(getLevel(stability)) 
         },
         { 
-          text: '关闭', 
+          text: t('close'), 
           style: 'cancel' 
         }
       ]
@@ -282,15 +284,15 @@ const Report = () => {
   const showFocusReport = (level) => {
     const assessment = getFocusAbilityAssessment(level);
     Alert.alert(
-      `专注力: ${level}级 - ${assessment.title}`,
+      t('focusAbilityTitle').replace('{level}', level).replace('{title}', assessment.title),
       assessment.description,
       [
         { 
-          text: '查看感知力', 
+          text: t('viewPerception'), 
           onPress: () => showPerceptionReport(getLevel(endurance)) 
         },
         { 
-          text: '关闭', 
+          text: t('close'), 
           style: 'cancel' 
         }
       ]
@@ -301,11 +303,11 @@ const Report = () => {
   const showPerceptionReport = (level) => {
     const assessment = getPerceptionAbilityAssessment(level);
     Alert.alert(
-      `感知力: ${level}级 - ${assessment.title}`,
+      t('perceptionTitle').replace('{level}', level).replace('{title}', assessment.title),
       assessment.description,
       [
         { 
-          text: '完成', 
+          text: t('complete'), 
           style: 'default' 
         }
       ]
@@ -320,13 +322,13 @@ const Report = () => {
       style={styles.background}
     >
       <View style={styles.titleContainer}>
-        <Text style={styles.titleText}>拼图游戏分析</Text>
+        <Text style={styles.titleText}>{t('reportTitle')}</Text>
       </View>
       
       <View style={styles.contentContainer}>
         {renderAbilityChart()}
         
-        <Text style={styles.nameText}>姓名：{userName} , 完成时间：{completionTime} 秒</Text>
+        <Text style={styles.nameText}>{t('nameAndTime').replace('{name}', userName).replace('{time}', completionTime)}</Text>
          {/* 右上角查看报告按钮 - 使用更明显的按钮样式 */}
          <TouchableOpacity
           style={{
@@ -363,15 +365,15 @@ const Report = () => {
               try {
                 // 提示用戶查看詳細報告
                 Alert.alert(
-                  '報告生成成功',
-                  '要查看詳細報告嗎？',
+                  t('reportGenerated'),
+                  t('viewDetailReport'),
                   [
                     {
-                      text: '取消',
+                      text: t('cancel'),
                       style: 'cancel',
                     },
                     {
-                      text: '確認',
+                      text: t('confirm'),
                       onPress: () => {
                         navigation.navigate('NewReport', { reportData });
                       },
@@ -382,23 +384,23 @@ const Report = () => {
                 console.log('RNHTMLtoPDF 不可用，使用备用方案...', error);
                 // 备用方案：显示报告内容
                 Alert.alert(
-                  '脑电波评估报告',
-                  `姓名：${userName}\n完成时间：${completionTime} 秒\n\n协调力: ${coordinationAssessment.title}\n脑活力: ${brainActivityAssessment.title}\n专注力: ${focusAssessment.title}\n感知力: ${perceptionAssessment.title}`,
+                  t('brainwaveReport'),
+                  `${t('nameAndTime').replace('{name}', userName).replace('{time}', completionTime)}\n\n${t('coordination')}: ${coordinationAssessment.title}\n${t('brainActivity')}: ${brainActivityAssessment.title}\n${t('focusAbility')}: ${focusAssessment.title}\n${t('perception')}: ${perceptionAssessment.title}`,
                   [
                     { 
-                      text: '复制报告', 
+                      text: t('copyReport'), 
                       onPress: () => {
-                        const reportText = `脑电波评估报告\n\n姓名：${userName}\n完成时间：${completionTime} 秒\n\n协调力: ${coordinationAssessment.title}\n${coordinationAssessment.description}\n\n脑活力: ${brainActivityAssessment.title}\n${brainActivityAssessment.description}\n\n专注力: ${focusAssessment.title}\n${focusAssessment.description}\n\n感知力: ${perceptionAssessment.title}\n${perceptionAssessment.description}`;
+                        const reportText = `${t('brainwaveReport')}\n\n${t('nameAndTime').replace('{name}', userName).replace('{time}', completionTime)}\n\n${t('coordination')}: ${coordinationAssessment.title}\n${coordinationAssessment.description}\n\n${t('brainActivity')}: ${brainActivityAssessment.title}\n${brainActivityAssessment.description}\n\n${t('focusAbility')}: ${focusAssessment.title}\n${focusAssessment.description}\n\n${t('perception')}: ${perceptionAssessment.title}\n${perceptionAssessment.description}`;
                         Clipboard.setString(reportText);
                         if (Platform.OS === 'android') {
-                          ToastAndroid.show('报告已复制到剪贴板', ToastAndroid.SHORT);
+                          ToastAndroid.show(t('reportCopied'), ToastAndroid.SHORT);
                         } else {
-                          Alert.alert('成功', '报告已复制到剪贴板');
+                          Alert.alert(t('success'), t('reportCopied'));
                         }
                       } 
                     },
                     { 
-                      text: '关闭', 
+                      text: t('close'), 
                       style: 'cancel' 
                     }
                   ]
@@ -410,32 +412,32 @@ const Report = () => {
               
               // 如果 PDF 生成失败，则显示简化报告
               Alert.alert(
-                '脑电波评估报告', 
-                `姓名：${userName}\n完成时间：${completionTime} 秒\n\n协调力: ${coordinationAssessment.title}\n脑活力: ${brainActivityAssessment.title}\n专注力: ${focusAssessment.title}\n感知力: ${perceptionAssessment.title}`,
-                [{ text: 'OK', style: 'default' }]
+                t('brainwaveReport'), 
+                `${t('nameAndTime').replace('{name}', userName).replace('{time}', completionTime)}\n\n${t('coordination')}: ${coordinationAssessment.title}\n${t('brainActivity')}: ${brainActivityAssessment.title}\n${t('focusAbility')}: ${focusAssessment.title}\n${t('perception')}: ${perceptionAssessment.title}`,
+                [{ text: t('ok'), style: 'default' }]
               );
             }
           }}
           activeOpacity={0.7}
         >
-          <Text style={{ color: '#FFC0CB', fontWeight: 'bold', fontSize: 16 }}>查看报告</Text>
+          <Text style={{ color: '#FFC0CB', fontWeight: 'bold', fontSize: 16 }}>{t('viewReport')}</Text>
         </TouchableOpacity>
         <View style={styles.statsContainer}>
           <View style={[styles.statsBox, styles.throwsBox]}>
-            <Text style={styles.statsLabel}>协调力</Text>
-            <Text style={styles.statsValue}>{getLevel(brainPower)}级</Text>
+            <Text style={styles.statsLabel}>{t('coordination')}</Text>
+            <Text style={styles.statsValue}>{t('level').replace('{level}', getLevel(brainPower))}</Text>
           </View>
           <View style={[styles.statsBox, styles.successBox]}>
-            <Text style={styles.statsLabel}>脑活力</Text>
-            <Text style={styles.statsValue}>{getLevel(superPower)}级</Text>
+            <Text style={styles.statsLabel}>{t('brainActivity')}</Text>
+            <Text style={styles.statsValue}>{t('level').replace('{level}', getLevel(superPower))}</Text>
           </View>
           <View style={[styles.statsBox, styles.scoreBox]}>
-            <Text style={styles.statsLabel}>专注力</Text>
-            <Text style={styles.statsValue}>{getLevel(stability)}级</Text>
+            <Text style={styles.statsLabel}>{t('focusAbility')}</Text>
+            <Text style={styles.statsValue}>{t('level').replace('{level}', getLevel(stability))}</Text>
           </View>
           <View style={[styles.statsBox, styles.percentileBox]}>
-            <Text style={styles.statsLabel}>感知力</Text>
-            <Text style={styles.statsValue}>{getLevel(endurance)}级</Text>
+            <Text style={styles.statsLabel}>{t('perception')}</Text>
+            <Text style={styles.statsValue}>{t('level').replace('{level}', getLevel(endurance))}</Text>
           </View>
         </View>
       </View>
@@ -450,7 +452,7 @@ const Report = () => {
             style={styles.buttonBackground}
             resizeMode="stretch"
           >
-            <Text style={styles.buttonText}>回首页</Text>
+            <Text style={styles.buttonText}>{t('backToHome')}</Text>
           </ImageBackground>
         </TouchableOpacity>
 

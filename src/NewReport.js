@@ -12,8 +12,9 @@ import {
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { getLevel, getCoordinationAssessment, getBrainActivityAssessment, getFocusAbilityAssessment, getPerceptionAbilityAssessment } from '../utils/reportUtils';
+import { getLevel, getCoordinationAssessment, getBrainActivityAssessment, getFocusAbilityAssessment, getPerceptionAbilityAssessment } from './utils/reportUtils';
 import RNHTMLtoPDF from 'react-native-html-to-pdf';
+import { useLanguage } from './i18n/LanguageContext';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -22,7 +23,8 @@ const NewReport = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { reportData } = route.params || {};
-  const [userName, setUserName] = useState('受试者');
+  const { t } = useLanguage(); // 使用語言上下文
+  const [userName, setUserName] = useState(t('testUser') || '受试者');
 
   const coordinationLevel = getLevel(reportData?.brainPower ?? 0);
   const brainActivityLevel = getLevel(reportData?.superPower ?? 0);
@@ -48,7 +50,7 @@ const NewReport = () => {
       <html>
       <head>
         <meta charset="utf-8">
-        <title>脑电波分析报告</title>
+        <title>${t('brainwaveAnalysisReport')}</title>
         <style>
           body { font-family: Arial, sans-serif; margin: 20px; }
           h1 { color: #4CAF50; text-align: center; }
@@ -61,49 +63,49 @@ const NewReport = () => {
         </style>
       </head>
       <body>
-        <h1>脑电波指标等级评估报告</h1>
+        <h1>${t('brainwaveIndexReport')}</h1>
         
         <div class="info">
-          <p><strong>姓名：</strong>${userName}</p>
-          <p><strong>完成时间：</strong>${reportData?.completionTime} 秒</p>
-          <p><strong>报告生成时间：</strong>${new Date().toLocaleString()}</p>
+          <p><strong>${t('userName')}：</strong>${userName}</p>
+          <p><strong>${t('completionTime')}：</strong>${reportData?.completionTime} ${t('seconds')}</p>
+          <p><strong>${t('reportGenerationTime')}：</strong>${new Date().toLocaleString()}</p>
         </div>
         
-        <h2>★ 协调力：<span class="level">${coordinationLevel}级 - ${coordinationAssessment.title}</span></h2>
+        <h2>★ ${t('coordination')}：<span class="level">${t('level').replace('{level}', coordinationLevel)} - ${coordinationAssessment.title}</span></h2>
         <p>${coordinationAssessment.description}</p>
         
-        <p><strong>表现特征：</strong></p>
+        <p><strong>${t('performanceCharacteristics')}：</strong></p>
         <ul class="features">
           ${coordinationAssessment.features.map(feature => `<li class="feature-item">${feature}</li>`).join('')}
         </ul>
         
-        <p><strong>建议：</strong></p>
+        <p><strong>${t('suggestions')}：</strong></p>
         <ul class="suggestions">
           ${coordinationAssessment.suggestions.map(suggestion => `<li class="suggestion-item">${suggestion}</li>`).join('')}
         </ul>
         
-        <h2>★ 脑活力：<span class="level">${brainActivityLevel}级 - ${brainActivityAssessment.title}</span></h2>
+        <h2>★ ${t('brainActivity')}：<span class="level">${t('level').replace('{level}', brainActivityLevel)} - ${brainActivityAssessment.title}</span></h2>
         <p>${brainActivityAssessment.description}</p>
         
-        <p><strong>表现特征：</strong></p>
+        <p><strong>${t('performanceCharacteristics')}：</strong></p>
         <ul class="features">
           ${brainActivityAssessment.features.map(feature => `<li class="feature-item">${feature}</li>`).join('')}
         </ul>
         
-        <p><strong>建议：</strong></p>
+        <p><strong>${t('suggestions')}：</strong></p>
         <ul class="suggestions">
           ${brainActivityAssessment.suggestions.map(suggestion => `<li class="suggestion-item">${suggestion}</li>`).join('')}
         </ul>
         
-        <h2>★ 专注力：<span class="level">${focusLevel}级 - ${focusAssessment.title}</span></h2>
+        <h2>★ ${t('focusAbility')}：<span class="level">${t('level').replace('{level}', focusLevel)} - ${focusAssessment.title}</span></h2>
         <p>${focusAssessment.description}</p>
         
-        <p><strong>表现特征：</strong></p>
+        <p><strong>${t('performanceCharacteristics')}：</strong></p>
         <ul class="features">
           ${focusAssessment.features.map(feature => `<li class="feature-item">${feature}</li>`).join('')}
         </ul>
         
-        <p><strong>建议：</strong></p>
+        <p><strong>${t('suggestions')}：</strong></p>
         <ul class="suggestions">
           ${focusAssessment.suggestions.map(suggestion => `<li class="suggestion-item">${suggestion}</li>`).join('')}
         </ul>

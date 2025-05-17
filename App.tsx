@@ -14,6 +14,7 @@ import History from './src/History';
 import Report from './src/Report';
 import PreviewReport from './src/PreviewReport';
 import { AppStateProvider } from './src/context/AppStateContext';
+import NewReport from './src/NewReport';
 
 const Stack = createNativeStackNavigator();
 
@@ -27,6 +28,7 @@ function App(): React.JSX.Element {
           <Stack.Screen name="History" component={History} />
           <Stack.Screen name="Report" component={Report} />
           <Stack.Screen name="PreviewReport" component={PreviewReport} />
+          <Stack.Screen name="NewReport" component={NewReport} />
         </Stack.Navigator>
       </NavigationContainer>
     </AppStateProvider>

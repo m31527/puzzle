@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,12 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Svg, { Path, Line, G, Circle, Rect } from 'react-native-svg';
 import { getLevel } from './utils/reportUtils';
+import { useLanguage } from './i18n/LanguageContext';
 
 const PreviewReport = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const { t } = useLanguage(); // 使用語言上下文
   // 确保从不同来源进入时都能正确获取数据
   const [reportData, setReportData] = useState(null);
   // 從路由參數獲取報告數據，如果沒有則使用默認值
@@ -207,11 +209,11 @@ const PreviewReport = () => {
     >
       <ScrollView style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>益智積木腦力評測報告</Text>
+          <Text style={styles.title}>{t('previewReportTitle')}</Text>
           <View style={styles.timeContainer}>
-            <Text style={styles.timeLabel}>完成時間</Text>
+            <Text style={styles.timeLabel}>{t('completionTime')}</Text>
             <Text style={styles.timeValue}>{completionTime}</Text>
-            <Text style={styles.timeUnit}>秒</Text>
+            <Text style={styles.timeUnit}>{t('seconds')}</Text>
           </View>
         </View>
         
@@ -222,37 +224,37 @@ const PreviewReport = () => {
         <View style={styles.abilitiesContainer}>
           {renderAbilityCircle(
             coordinationLevel,
-            '協調力',
-            '腦功能处于基础发展阶段，有较大提升空间'
+            t('coordination'),
+            t('coordinationDesc')
           )}
           
           {renderAbilityCircle(
             brainActivityLevel,
-            '腦活力',
-            '腦功能发展不均衡，具备一定基础'
+            t('brainActivity'),
+            t('brainActivityDesc')
           )}
           
           {renderAbilityCircle(
             focusLevel,
-            '專注力',
-            '腦功能发展良好，部分领域表现突出'
+            t('focusAbility'),
+            t('focusAbilityDesc')
           )}
           
           {renderAbilityCircle(
             perceptionLevel,
-            '感知力',
-            '腦功能发展优异，具备综合优势'
+            t('perception'),
+            t('perceptionDesc')
           )}
         </View>
         
         {/* 按鈕區域 */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.button} onPress={viewDetailReport}>
-            <Text style={styles.buttonText}>查看詳細報告</Text>
+            <Text style={styles.buttonText}>{t('viewDetailReport')}</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={goToHome}>
-            <Text style={[styles.buttonText, styles.secondaryButtonText]}>返回首頁</Text>
+            <Text style={[styles.buttonText, styles.secondaryButtonText]}>{t('returnToHome')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

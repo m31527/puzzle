@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AppStateProvider } from './src/context/AppStateContext';
+import { LanguageProvider } from './src/i18n/LanguageContext';
 import Home from './src/Home';
 import Evaluate from './src/Evaluate';
 import Report from './src/Report';
@@ -14,8 +15,9 @@ const Stack = createNativeStackNavigator();
 const App = () => {
   return (
     <AppStateProvider>
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName="Home">
+      <LanguageProvider>
+        <NavigationContainer>
+          <Stack.Navigator initialRouteName="Home">
         <Stack.Screen 
           name="Home" 
           component={Home}
@@ -47,7 +49,8 @@ const App = () => {
           options={{ headerShown: false }}
         />
         </Stack.Navigator>
-      </NavigationContainer>
+        </NavigationContainer>
+      </LanguageProvider>
     </AppStateProvider>
   );
 };

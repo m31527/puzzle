@@ -10,9 +10,11 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Database from './utils/database';
+import { useLanguage } from './i18n/LanguageContext';
 
 const History = () => {
   const navigation = useNavigation();
+  const { t } = useLanguage(); // 使用語言上下文
   const [records, setRecords] = useState([]);
 
   // 加载游戏记录
@@ -56,14 +58,14 @@ const History = () => {
         setRecords(prevRecords => prevRecords.filter(record => record.timestamp !== timestamp));
         // 同时也重新加载数据库中的记录，确保数据同步
         loadGameRecords();
-        Alert.alert('成功', '记录已删除');
+        Alert.alert(t('success'), t('recordDeleted'));
       } else {
         console.error('删除记录失败');
-        Alert.alert('错误', '删除记录失败');
+        Alert.alert(t('error'), t('deleteFailed'));
       }
     } catch (error) {
       console.error('删除记录时发生错误:', error);
-      Alert.alert('错误', '删除记录失败');
+      Alert.alert(t('error'), t('deleteFailed'));
     }
   };
 
@@ -106,23 +108,23 @@ const History = () => {
           <TouchableOpacity onPress={goBack} style={styles.backButton}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>拼图游戏</Text>
+          <Text style={styles.title}>{t('puzzleGame')}</Text>
         </View>
 
-        <Text style={styles.subtitle}>历史记录</Text>
+        <Text style={styles.subtitle}>{t('historyTitle')}</Text>
 
         <View style={styles.tableHeader}>
-          <Text style={styles.tableHeaderText}>时间</Text>
-          <Text style={styles.tableHeaderText}>姓名</Text>
-          <Text style={styles.tableHeaderText}>计时</Text>
+          <Text style={styles.tableHeaderText}>{t('time')}</Text>
+          <Text style={styles.tableHeaderText}>{t('userName')}</Text>
+          <Text style={styles.tableHeaderText}>{t('timer')}</Text>
         </View>
         {/* 添加调试信息显示记录数量 */}
-        <Text style={styles.subtitle}>记录数量: {records.length}</Text>
+        <Text style={styles.subtitle}>{t('recordCount').replace('{count}', records.length)}</Text>
         
         <FlatList
           data={records}
           keyExtractor={(item, index) => `${item.timestamp || 'null'}-${index}`}
-          ListEmptyComponent={<Text style={styles.emptyText}>没有历史记录</Text>}
+          ListEmptyComponent={<Text style={styles.emptyText}>{t('noRecords')}</Text>}
           contentContainerStyle={styles.flatListContent}
           renderItem={({ item }) => (
             <TouchableOpacity 
@@ -137,22 +139,22 @@ const History = () => {
                   style={styles.deleteButton}
                   onPress={() => {
                     Alert.alert(
-                      "删除记录",
-                      "确定要删除这条记录吗？",
+                      t('deleteRecord'),
+                      t('deleteConfirm'),
                       [
                         {
-                          text: "取消",
+                          text: t('cancel'),
                           style: "cancel"
                         },
                         {
-                          text: "确定",
+                          text: t('confirm'),
                           onPress: () => deleteRecord(item.timestamp)
                         }
                       ]
                     );
                   }}
                 >
-                  <Text style={styles.deleteButtonText}>删除</Text>
+                  <Text style={styles.deleteButtonText}>{t('delete')}</Text>
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>

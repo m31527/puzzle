@@ -16,6 +16,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import TestDataGenerator from './TestDataGenerator';
 import { TestProvider } from './contexts/TestContext';
+import { useLanguage, LANGUAGES } from './i18n/LanguageContext';
 
 // 使用 require 直接导入原生模块
 const NeuroSkyModule = require('react-native').NativeModules.NeuroSkyModule;
@@ -35,8 +36,9 @@ const neuroSkyEmitter = new NativeEventEmitter(NeuroSkyModule);
 
 const Home = () => {
     const navigation = useNavigation();
-    const [thinkGearStatus, setThinkGearStatus] = useState('未连接');
-    // const [esp32Status, setEsp32Status] = useState('未连接');
+    const { t, language } = useLanguage(); // 使用語言上下文
+    const [thinkGearStatus, setThinkGearStatus] = useState(t('disconnected'));
+    // const [esp32Status, setEsp32Status] = useState(t('disconnected'));
     const [attention, setAttention] = useState(0);
     // const [esp32Data, setEsp32Data] = useState(null);
     const [userName, setUserName] = useState('受试者');
@@ -63,9 +65,9 @@ const Home = () => {
                 } else {
                     console.log('部分权限被拒绝:', granted);
                     Alert.alert(
-                        '权限被拒绝',
-                        '需要蓝牙和位置权限才能连接设备。请在设置中允许这些权限。',
-                        [{ text: '确定', onPress: () => console.log('用户确认权限提示') }]
+                        t('permissionTitle'),
+                        t('permissionMessage'),
+                        [{ text: t('confirm'), onPress: () => console.log('用户确认权限提示') }]
                     );
                     return false;
                 }
@@ -89,19 +91,19 @@ const Home = () => {
                         console.log('ThinkGear 状态变更:', event.state);
                         switch (event.state) {
                             case 'CONNECTED':
-                                setThinkGearStatus('已连接');
+                                setThinkGearStatus(t('connected'));
                                 break;
                             case 'DISCONNECTED':
-                                setThinkGearStatus('未连接');
+                                setThinkGearStatus(t('disconnected'));
                                 break;
                             case 'CONNECTING':
-                                setThinkGearStatus('连接中...');
+                                setThinkGearStatus(t('connecting'));
                                 break;
                             case 'POOR_SIGNAL':
-                                setThinkGearStatus('信号不良');
+                                setThinkGearStatus(t('poorSignal'));
                                 break;
                             case 'NO_PERMISSION':
-                                setThinkGearStatus('需要蓝牙权限');
+                                setThinkGearStatus(t('needPermission'));
                                 // 如果收到权限错误，再次请求权限
                                 requestBluetoothPermissions();
                                 break;
@@ -287,17 +289,18 @@ const Home = () => {
         });
     };
 
+    // 根据状态返回不同的颜色
     const getStatusColor = (status) => {
         switch (status) {
-            case '已连接':
+            case t('connected'):
                 return '#4CAF50'; // 绿色
-            case '连接中...':
-                return '#FFA500'; // 橙色
-            case '未连接':
-                return '#FF0000'; // 红色
-            case '信号不良':
-                return '#FF9800'; // 深橙色
-            case '需要蓝牙权限':
+            case t('disconnected'):
+                return '#F44336'; // 红色
+            case t('connecting'):
+                return '#2196F3'; // 蓝色
+            case t('poorSignal'):
+                return '#FFC107'; // 黄色
+            case t('needPermission'):
                 return '#FF9800'; // 深橙色
             default:
                 return '#fff';
@@ -305,7 +308,7 @@ const Home = () => {
     };
 
     // 只检查 ThinkGear 是否连接
-    const canStart = thinkGearStatus === '已连接';
+    const canStart = thinkGearStatus === t('connected');
 
     return (
         <TestProvider testGenerator={testGenerator}>
@@ -319,13 +322,13 @@ const Home = () => {
                             onPress={toggleTestMode}
                         >
                             <Text style={styles.testModeButtonText}>
-                                {isTestMode ? '关闭测试模式' : '开启测试模式'}
+                                {isTestMode ? t('disableTestMode') : t('enableTestMode')}
                             </Text>
                         </TouchableOpacity>
                     </View> */}
 
                     <View style={styles.titleContainer}>
-                        <Text style={styles.title}>益智积木脑力评测</Text>
+                        <Text style={styles.title}>{t('appName')}</Text>
                         <Image
                             source={require('../assets/img/main.png')}
                             style={styles.mainImage}
@@ -333,14 +336,16 @@ const Home = () => {
                         />
                     </View>
 
+                    {/* 已移除語言切換按鈕，使用固定語言 */}
+
                     <View style={styles.statusContainer}>
                         <View style={styles.deviceStatus}>
-                            <Text style={styles.deviceLabel}>脑波仪状态:</Text>
+                            <Text style={styles.deviceLabel}>{t('thinkGearStatus')}:</Text>
                             <Text style={[styles.statusText, { color: getStatusColor(thinkGearStatus) }]}>
                                 {thinkGearStatus}
                             </Text>
-                            {thinkGearStatus === '已连接' && (
-                                <Text style={styles.attentionText}>专注度: {attention}%</Text>
+                            {thinkGearStatus === t('connected') && (
+                                <Text style={styles.attentionText}>{t('attention')}: {attention}%</Text>
                             )}
                         </View>
 
@@ -353,12 +358,12 @@ const Home = () => {
                     </View>
 
                     <View style={styles.inputContainer}>
-                        <Text style={styles.label}>姓名：</Text>
+                        <Text style={styles.label}>{t('name')}：</Text>
                         <TextInput
                             style={styles.input}
                             value={userName}
                             onChangeText={setUserName}
-                            placeholder="请输入姓名"
+                            placeholder={t('namePlaceholder')}
                             placeholderTextColor="#999"
                         />
                     </View>
@@ -374,7 +379,7 @@ const Home = () => {
                                 style={styles.startButtonImage}
                                 resizeMode="stretch"
                             >
-                                <Text style={styles.startButtonText}>开始</Text>
+                                <Text style={styles.startButtonText}>{t('start')}</Text>
                             </ImageBackground>
                         </TouchableOpacity>
                     </View>
@@ -395,6 +400,35 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         flexDirection: 'row',
+    },
+    languageContainer: {
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        zIndex: 10,
+    },
+    languageButton: {
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        marginLeft: 10,
+        borderRadius: 5,
+        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+        borderWidth: 1,
+        borderColor: '#ccc',
+    },
+    activeLanguageButton: {
+        backgroundColor: '#1D417D',
+        borderColor: '#1D417D',
+    },
+    languageButtonText: {
+        fontSize: 14,
+        color: '#333',
+    },
+    activeLanguageButtonText: {
+        color: '#fff',
     },
     container: {
         flex: 1,

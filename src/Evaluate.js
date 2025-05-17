@@ -14,6 +14,8 @@ import {
   Animated,
 } from 'react-native';
 
+import { useLanguage } from './i18n/LanguageContext';
+
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import Database from './utils/database';
 import { GAME_CONFIG } from './config/gameConfig';
@@ -233,6 +235,7 @@ function gameDataReducer(state, action) {
 const Evaluate = forwardRef((props, ref) => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const { t } = useLanguage(); // 使用語言上下文
   const [gameState, dispatch] = useReducer(gameDataReducer, initialState);
   const [timeCounter, setTimeCounter] = useState(0);
   const [pageEnterTime] = useState(Date.now()); // 记录进入页面的时间
@@ -1033,7 +1036,7 @@ const Evaluate = forwardRef((props, ref) => {
       style={styles.background}
     >
       <View style={styles.titleContainer}>
-        <Text style={styles.titleText}>拼图游戏</Text>
+        <Text style={styles.titleText}>{t('puzzleGame')}</Text>
       </View>
       <View style={styles.container}>
         {/* End game button */}
@@ -1058,7 +1061,7 @@ const Evaluate = forwardRef((props, ref) => {
               style={styles.buttonBackground}
               resizeMode="stretch"
             >
-              <Text style={styles.footerButtonText}>回首页</Text>
+              <Text style={styles.footerButtonText}>{t('backToHome')}</Text>
             </ImageBackground>
           </TouchableOpacity>
           <TouchableOpacity 
@@ -1069,7 +1072,7 @@ const Evaluate = forwardRef((props, ref) => {
               style={styles.buttonBackground}
               resizeMode="stretch"
             >
-              <Text style={styles.footerButtonText}>历史记录</Text>
+              <Text style={styles.footerButtonText}>{t('history')}</Text>
             </ImageBackground>
           </TouchableOpacity>
         </View>
@@ -1082,10 +1085,10 @@ const Evaluate = forwardRef((props, ref) => {
         visible={showCompletionModal}>
         <View style={styles.modalBackground}>
           <View style={[styles.loadingContainer, styles.completionContainer]}>
-            <Text style={styles.completionText}>恭喜完成拼图！</Text>
+            <Text style={styles.completionText}>{t('congratulations')}</Text>
             {isProcessing ? (
               <View style={styles.processingContainer}>
-                <Text style={styles.processingText}>请专心等待脑波数据处理...</Text>
+                <Text style={styles.processingText}>{t('waitForProcessing')}</Text>
                 <Text style={styles.processingSubText}>{loadingText}</Text>
                 
                 {/* 进度条动画 - 分段式设计 */}
@@ -1122,7 +1125,7 @@ const Evaluate = forwardRef((props, ref) => {
                   <Text style={[styles.progressLabel, processingProgress >= 100 ? styles.progressLabelActive : {}]}>100%</Text>
                 </View>
                 
-                <Text style={styles.processingCountdown}>剩余 {Math.ceil((100 - processingProgress) / 10)} 秒</Text>
+                <Text style={styles.processingCountdown}>{t('remainingTime').replace('{time}', Math.ceil((100 - processingProgress) / 10))}</Text>
               </View>
             ) : (
               <TouchableOpacity
@@ -1142,16 +1145,16 @@ const Evaluate = forwardRef((props, ref) => {
                     // 更新提示文字
                     if (progress < 30) {
                       // 前30%时间收集注意力数据
-                      setLoadingText('正在整理脑波注意力数据...');
+                      setLoadingText(t('processingAttention'));
                     } else if (progress < 60) {
                       // 30-60%时间收集协调力数据
-                      setLoadingText('正在整理脑波协调力数据...');
+                      setLoadingText(t('processingCoordination'));
                     } else if (progress < 90) {
                       // 60-90%时间收集感知力数据
-                      setLoadingText('正在整理脑波感知力数据...');
+                      setLoadingText(t('processingPerception'));
                     } else {
                       // 最后10%时间处理数据
-                      setLoadingText('正在整理脑波数据...');
+                      setLoadingText(t('processingBrainwave'));
                     }
                     
                     if (progress >= 100) {
@@ -1165,7 +1168,7 @@ const Evaluate = forwardRef((props, ref) => {
                     }
                   }, 200);
                 }}>
-                <Text style={styles.reportButtonText}>查看报告</Text>
+                <Text style={styles.reportButtonText}>{t('viewReport')}</Text>
               </TouchableOpacity>
             )}
           </View>
