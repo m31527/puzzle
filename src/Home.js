@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, NativeModules, Platform, NativeEventEmitter, ImageBackground, TextInput, Image } from 'react-native';
+import { 
+    View, 
+    Text, 
+    StyleSheet, 
+    TouchableOpacity, 
+    NativeModules, 
+    Platform, 
+    NativeEventEmitter, 
+    ImageBackground, 
+    TextInput, 
+    Image,
+    Alert,
+    PermissionsAndroid
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import TestDataGenerator from './TestDataGenerator';
 import { TestProvider } from './contexts/TestContext';
@@ -30,48 +43,87 @@ const Home = () => {
     const [isTestMode, setIsTestMode] = useState(false);
     const [testGenerator, setTestGenerator] = useState(null);
 
+    // 请求蓝牙权限
+    const requestBluetoothPermissions = async () => {
+        if (Platform.OS === 'android') {
+            try {
+                const granted = await PermissionsAndroid.requestMultiple([
+                    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+                    PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+                    PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN
+                ]);
+                
+                const allPermissionsGranted = Object.values(granted).every(
+                    status => status === PermissionsAndroid.RESULTS.GRANTED
+                );
+                
+                if (allPermissionsGranted) {
+                    console.log('所有蓝牙相关权限已授予');
+                    return true;
+                } else {
+                    console.log('部分权限被拒绝:', granted);
+                    Alert.alert(
+                        '权限被拒绝',
+                        '需要蓝牙和位置权限才能连接设备。请在设置中允许这些权限。',
+                        [{ text: '确定', onPress: () => console.log('用户确认权限提示') }]
+                    );
+                    return false;
+                }
+            } catch (error) {
+                console.error('请求权限时发生错误:', error);
+                return false;
+            }
+        }
+        return true; // iOS 暂不需要显式请求权限
+    };
+
     useEffect(() => {
         const subscriptions = [];
 
-        if (NeuroSkyModule) {
-            // ThinkGear 事件监听
-            subscriptions.push(
-                neuroSkyEmitter.addListener('onStateChange', (event) => {
-                    console.log('ThinkGear 状态变更:', event.state);
-                    switch (event.state) {
-                        case 'CONNECTED':
-                            setThinkGearStatus('已连接');
-                            break;
-                        case 'DISCONNECTED':
-                            setThinkGearStatus('未连接');
-                            break;
-                        case 'CONNECTING':
-                            setThinkGearStatus('连接中...');
-                            break;
-                        case 'POOR_SIGNAL':
-                            setThinkGearStatus('信号不良');
-                            break;
-                        case 'NO_PERMISSION':
-                            setThinkGearStatus('需要蓝牙权限');
-                            break;
-                    }
-                })
-            );
+        // 在组件加载时立即请求蓝牙权限
+        requestBluetoothPermissions().then(permissionsGranted => {
+            if (permissionsGranted && NeuroSkyModule) {
+                // ThinkGear 事件监听
+                subscriptions.push(
+                    neuroSkyEmitter.addListener('onStateChange', (event) => {
+                        console.log('ThinkGear 状态变更:', event.state);
+                        switch (event.state) {
+                            case 'CONNECTED':
+                                setThinkGearStatus('已连接');
+                                break;
+                            case 'DISCONNECTED':
+                                setThinkGearStatus('未连接');
+                                break;
+                            case 'CONNECTING':
+                                setThinkGearStatus('连接中...');
+                                break;
+                            case 'POOR_SIGNAL':
+                                setThinkGearStatus('信号不良');
+                                break;
+                            case 'NO_PERMISSION':
+                                setThinkGearStatus('需要蓝牙权限');
+                                // 如果收到权限错误，再次请求权限
+                                requestBluetoothPermissions();
+                                break;
+                        }
+                    })
+                );
 
-            subscriptions.push(
-                neuroSkyEmitter.addListener('onSignalChange', (event) => {
-                    if (event.signal === 'ATTENTION') {
-                        setAttention(event.value);
-                    }
-                })
-            );
+                subscriptions.push(
+                    neuroSkyEmitter.addListener('onSignalChange', (event) => {
+                        if (event.signal === 'ATTENTION') {
+                            setAttention(event.value);
+                        }
+                    })
+                );
 
-            subscriptions.push(
-                neuroSkyEmitter.addListener('onError', (event) => {
-                    console.log('ThinkGear 错误:', event.error);
-                })
-            );
-        }
+                subscriptions.push(
+                    neuroSkyEmitter.addListener('onError', (event) => {
+                        console.log('ThinkGear 错误:', event.error);
+                    })
+                );
+            }
+        });
 
         // if (ESP32Module) {
         //     // ESP32 事件监听

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { getLevel, getCoordinationAssessment, getBrainActivityAssessment, getFocusAbilityAssessment, getPerceptionAbilityAssessment } from './utils/reportUtils';
+import { getLevel, getCoordinationAssessment, getBrainActivityAssessment, getFocusAbilityAssessment, getPerceptionAbilityAssessment } from '../utils/reportUtils';
 import RNHTMLtoPDF from 'react-native-html-to-pdf';
 
 const screenWidth = Dimensions.get('window').width;

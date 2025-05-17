@@ -6,9 +6,7 @@ import Home from './src/Home';
 import Evaluate from './src/Evaluate';
 import Report from './src/Report';
 import History from './src/History';
-import PuzzleGame from './src/PuzzleGame';
 import PuzzleTest from './src/PuzzleTest';
-import NewReport from './src/NewReport';
 import PDFView from './src/PDFView';
 
 const Stack = createNativeStackNavigator();
@@ -36,16 +34,6 @@ const App = () => {
         <Stack.Screen 
           name="History" 
           component={History}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen 
-          name="PuzzleGame" 
-          component={PuzzleGame}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen 
-          name="NewReport" 
-          component={NewReport}
           options={{ headerShown: false }}
         />
         <Stack.Screen 

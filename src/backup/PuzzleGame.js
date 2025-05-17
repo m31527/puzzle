@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
-import Database from './utils/database';
+import Database from '../utils/database';
 
 // 預先導入所有拼圖圖片
 const puzzleImages = {
