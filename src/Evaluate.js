@@ -235,8 +235,11 @@ const Evaluate = forwardRef((props, ref) => {
   const isFocused = useIsFocused();
   const [gameState, dispatch] = useReducer(gameDataReducer, initialState);
   const [timeCounter, setTimeCounter] = useState(0);
+  const [isPuzzleActive, setIsPuzzleActive] = useState(false); // 控制拼圖活動狀態，初始值為 false 以允許收集數據
   const [isLoading, setIsLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false); // 控制處理動畫狀態
+  const [processingProgress, setProcessingProgress] = useState(0); // 處理進度
 
   // 处理 ESP32 数据
   const handleESP32Data = useCallback((event) => {
@@ -295,21 +298,22 @@ const Evaluate = forwardRef((props, ref) => {
     });
   }, [dispatch]);
 
-  // 设置事件监听器
+  // 设置事件监听器 - 根據拼圖狀態控制
   const subscriptionsRef = useRef([]);
   useEffect(() => {
-    if (isFocused) {
-      console.log('Evaluate 页面获得焦点，开始数据处理');
+    if (isFocused && !isPuzzleActive) {
+      // 只有在頁面有焦點且拼圖不活動時才處理腦電波數據
+      console.log('Evaluate 页面获得焦点且拼图未激活，开始数据处理');
       setupEventListeners();
     } else {
-      console.log('Evaluate 页面失去焦点，停止数据处理');
+      console.log('Evaluate 页面失去焦点或拼图激活，暂停数据处理');
       // 清理事件监听器
       if (subscriptionsRef.current) {
         subscriptionsRef.current.forEach(subscription => subscription.remove());
         subscriptionsRef.current = [];
       }
     }
-  }, [isFocused, setupEventListeners]);
+  }, [isFocused, isPuzzleActive, setupEventListeners]);
 
   // 设置事件监听器
   const setupEventListeners = useCallback(() => {
@@ -994,16 +998,7 @@ const Evaluate = forwardRef((props, ref) => {
     setCompleted(new Array(TOTAL_PIECES).fill(true));
   }, [pieces]);
 
-  // 初始化計時器
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeCounter(prev => prev + 1);
-    }, 1000);
 
-    return () => {
-      clearInterval(timer);
-    };
-  }, []);
 
   // 組件卸載時清理
   useEffect(() => {
@@ -1034,6 +1029,7 @@ const Evaluate = forwardRef((props, ref) => {
             handlePiecePress={memoizedHandlePiecePress}
             pieces={memoizedPieces}
             navigation={navigation}
+            setIsPuzzleActive={setIsPuzzleActive}
           />
         </View>
         {/* Bottom navigation */}
@@ -1071,14 +1067,59 @@ const Evaluate = forwardRef((props, ref) => {
         <View style={styles.modalBackground}>
           <View style={[styles.loadingContainer, styles.completionContainer]}>
             <Text style={styles.completionText}>恭喜完成拼图！</Text>
-            <TouchableOpacity
-              style={styles.reportButton}
-              onPress={() => {
-                handleEndGame();
-                setShowCompletionModal(false);
-              }}>
-              <Text style={styles.reportButtonText}>查看报告</Text>
-            </TouchableOpacity>
+            {isProcessing ? (
+              <View style={styles.processingContainer}>
+                <Text style={styles.processingText}>請專心等待腦波數據處理...</Text>
+                <Text style={styles.processingSubText}>{loadingText}</Text>
+                <View style={styles.progressBarContainer}>
+                  <View style={[styles.progressBar, { width: `${processingProgress}%` }]} />
+                </View>
+                <Text style={styles.processingCountdown}>{Math.ceil((100 - processingProgress) / 10)}秒</Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.reportButton}
+                onPress={() => {
+                  // 開始處理動畫
+                  setIsProcessing(true);
+                  setIsPuzzleActive(false); // 恢復腦波數據處理
+                  
+                  // 設置進度條動畫 - 增加時間確保收集足夠數據
+                  let progress = 0;
+                  // 每200ms增加2%，10秒完成，給予更多時間收集腦電波數據
+                  const interval = setInterval(() => {
+                    progress += 2; 
+                    setProcessingProgress(progress);
+                    
+                    // 更新提示文字
+                    if (progress < 30) {
+                      // 前30%時間收集注意力數據
+                      setLoadingText('正在收集腦波注意力數據...');
+                    } else if (progress < 60) {
+                      // 30-60%時間收集協調力數據
+                      setLoadingText('正在收集腦波協調力數據...');
+                    } else if (progress < 90) {
+                      // 60-90%時間收集感知力數據
+                      setLoadingText('正在收集腦波感知力數據...');
+                    } else {
+                      // 最後10%時間處理數據
+                      setLoadingText('正在處理腦波數據...');
+                    }
+                    
+                    if (progress >= 100) {
+                      clearInterval(interval);
+                      // 動畫完成後處理數據並關閉modal
+                      handleEndGame();
+                      setShowCompletionModal(false);
+                      setIsProcessing(false);
+                      setProcessingProgress(0);
+                      setLoadingText('');
+                    }
+                  }, 200);
+                }}>
+                <Text style={styles.reportButtonText}>查看报告</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </Modal>
@@ -1103,6 +1144,41 @@ const styles = StyleSheet.create({
   titleContainer: {
     alignItems: 'center',
     paddingVertical: 20,
+  },
+  processingContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+    width: '100%',
+  },
+  processingText: {
+    fontSize: 18,
+    color: '#333',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  processingSubText: {
+    fontSize: 16,
+    color: '#4CAF50',
+    marginBottom: 15,
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  progressBarContainer: {
+    width: '80%',
+    height: 10,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#4CAF50',
+  },
+  processingCountdown: {
+    fontSize: 16,
+    color: '#555',
+    marginTop: 10,
+    fontWeight: 'bold',
   },
   titleText: {
     fontSize: 36,

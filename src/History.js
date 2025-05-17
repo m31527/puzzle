@@ -22,8 +22,17 @@ const History = () => {
 
   const loadGameRecords = async () => {
     try {
+      console.log('开始加载游戏记录...');
       await Database.initDB(); // 确保数据库已初始化
       const loadedRecords = await Database.getAllGameRecords();
+      console.log('加载到的记录数量:', loadedRecords.length);
+      
+      if (loadedRecords.length > 0) {
+        console.log('第一条记录示例:', JSON.stringify(loadedRecords[0]));
+      } else {
+        console.log('没有找到游戏记录');
+      }
+      
       setRecords(loadedRecords);
     } catch (error) {
       console.error('加载记录时发生错误:', error);
@@ -37,10 +46,21 @@ const History = () => {
   // 删除记录
   const deleteRecord = async (timestamp) => {
     try {
+      console.log('尝试删除记录:', timestamp);
       await Database.initDB(); // 确保数据库已初始化
-      await Database.deleteGameRecord(timestamp);
-      // 重新加载记录
-      loadGameRecords();
+      const success = await Database.deleteGameRecord(timestamp);
+      
+      if (success) {
+        console.log('删除成功，更新记录列表');
+        // 直接从当前状态中移除该记录，而不是重新加载
+        setRecords(prevRecords => prevRecords.filter(record => record.timestamp !== timestamp));
+        // 同时也重新加载数据库中的记录，确保数据同步
+        loadGameRecords();
+        Alert.alert('成功', '记录已删除');
+      } else {
+        console.error('删除记录失败');
+        Alert.alert('错误', '删除记录失败');
+      }
     } catch (error) {
       console.error('删除记录时发生错误:', error);
       Alert.alert('错误', '删除记录失败');
@@ -95,11 +115,15 @@ const History = () => {
           <Text style={styles.tableHeaderText}>时间</Text>
           <Text style={styles.tableHeaderText}>姓名</Text>
           <Text style={styles.tableHeaderText}>计时</Text>
-          <Text style={styles.tableHeaderText}>分数</Text>
         </View>
+        {/* 添加调试信息显示记录数量 */}
+        <Text style={styles.subtitle}>记录数量: {records.length}</Text>
+        
         <FlatList
           data={records}
           keyExtractor={(item, index) => `${item.timestamp || 'null'}-${index}`}
+          ListEmptyComponent={<Text style={styles.emptyText}>没有历史记录</Text>}
+          contentContainerStyle={styles.flatListContent}
           renderItem={({ item }) => (
             <TouchableOpacity 
               style={styles.tableRow}
@@ -108,8 +132,7 @@ const History = () => {
               <Text style={styles.tableCell}>{formatTimestamp(item.timestamp)}</Text>
               <Text style={styles.tableCell}>{item.userName}</Text>
               <Text style={styles.tableCell}>{item.completionTime}</Text>
-              <Text style={styles.tableCell}>
-                {/* {item.score} */}
+              <View style={styles.tableCell}>
                 <TouchableOpacity
                   style={styles.deleteButton}
                   onPress={() => {
@@ -129,9 +152,9 @@ const History = () => {
                     );
                   }}
                 >
-                  <Text style={styles.deleteButtonText}></Text>
+                  <Text style={styles.deleteButtonText}>删除</Text>
                 </TouchableOpacity>
-              </Text>
+              </View>
             </TouchableOpacity>
           )}
         />
@@ -145,6 +168,17 @@ export default History;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
+  },
+  flatListContent: {
+    flexGrow: 1,
+    paddingBottom: 20,
+  },
+  emptyText: {
+    textAlign: 'center',
+    padding: 20,
+    fontSize: 16,
+    color: '#666',
   },
   background: {
     flex: 1,
@@ -206,9 +240,16 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   deleteButton: {
-    marginLeft: 10,
+    backgroundColor: '#ff3b30',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   deleteButtonText: {
-    color: '#ff0000',
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 12,
   },
 });
